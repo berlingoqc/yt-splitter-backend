@@ -64,16 +64,16 @@ export function getVideoInfo(v) {
 
 async function convertToMP3(file, basePath) {
   await loadFFMPEG();
-  ffmpeg.FS("writeFile", file, await fetchFile(basePath + file));
+  ffmpeg.FS("writeFile", file, await fetchFile(path.join(basePath, file)));
   const output = "audio.mp3";
   await ffmpeg.run("-i", file, output);
-  await fs.promises.writeFile(basePath + output, ffmpeg.FS("readFile", output));
+  await fs.promises.writeFile(path.join(basePath,output), ffmpeg.FS("readFile", output));
   return output;
 }
 
 async function extractTrackFromMP3(file, trackName, start, end, basePath) {
   await loadFFMPEG();
-  ffmpeg.FS("writeFile", file, await fetchFile(basePath + file));
+  ffmpeg.FS("writeFile", file, await fetchFile(path.join(basePath, file)));
   const output = `${trackName}.mp3`;
   console.log('EXTRACTING ', start, end);
   //if(end) {
@@ -83,7 +83,7 @@ async function extractTrackFromMP3(file, trackName, start, end, basePath) {
   //  console.log('DURATION', end);
   //}
   await ffmpeg.run("-i", file, "-ss", start, end ? "-to" : "", end || '', "-acodec", "copy", output);
-  await fs.promises.writeFile(basePath + output, ffmpeg.FS("readFile", output));
+  await fs.promises.writeFile(path.join(basePath, output), ffmpeg.FS("readFile", output));
   return output;
 }
 
@@ -130,11 +130,11 @@ export async function getAlbumDetail(artist, album) {
 }
 
 export async function getThumbnail(artist, album) {
-  return path.join(basePath, artist, album, 'thumbnail.jpg');
+  return path.join(artist, album, 'thumbnail.jpg');
 }
 
 export async function getTrack(artist, album, track) {
-  return path.join(basePath, artist, album, track);
+  return path.join(artist, album, track);
 }
 
 export async function getArchiveAlbum(artist, album) {
@@ -190,8 +190,7 @@ export function yt_tracksplitter() {
   currentProcessInfo.name = `${model.album.artist} ${model.album.album}`;
   subjectTrackSplitter.next(currentProcessInfo);
   currentSplitter = new Observable(async (sub) => {
-    const folder =
-      basePath + "/" + model.album.artist + "/" + model.album.album + "/";
+    const folder = path.join(basePath, model.album.artist, model.album.album);
 
     sub.next({status: 'Creating folder'});
     if (fs.existsSync(folder)) fs.rmdirSync(folder, { recursive: true });
