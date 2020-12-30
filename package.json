@@ -5,7 +5,7 @@
   "main": "index.js",
   "module": "main.js",
   "scripts": {
-    "run": "node --experimental-wasm-threads --experimental-wasm-bulk-memory .",
+    "run": "node --experimental-wasm-threads --experimental-wasm-bulk-memory ./index_cmd.js",
     "gui": "qode --experimental-wasm-threads --experimental-wasm-bulk-memory ./index.js",
     "pack": "nodegui-packer --pack ./dist",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -20,6 +20,7 @@
     "cors": "^2.8.5",
     "esm": "^3.2.25",
     "express": "^4.17.1",
+    "express-basic-auth": "^1.2.0",
     "node-id3": "^0.2.1",
     "request": "^2.88.2",
     "rxjs": "^6.6.3",
