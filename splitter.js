@@ -48,9 +48,10 @@ const downloadImage = function (uri, filename, callback) {
 
 function downloadYT(v, basePath) {
   return new Promise((resolver, reject) => {
-    const path = path.join(basePath, "original.mp4");
+    const p = path.join(basePath, "original.mp4");
+    console.log('PATH', p);
     ytdl(`https://www.youtube.com/watch?v=${v}`)
-      .pipe(fs.createWriteStream(path))
+      .pipe(fs.createWriteStream(p))
       .addListener("close", () => {
         console.log("WRITTING OVER");
         resolver("original.mp4");
