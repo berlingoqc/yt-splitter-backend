@@ -2,6 +2,7 @@
 export {};
 
 const fs = require("fs");
+const path = require("path");
 
 const request = require("request");
 
@@ -9,12 +10,14 @@ const ytdl = require("ytdl-core");
 
 const NodeID3 = require("node-id3");
 
+const zip = require("adm-zip");
+
 const { createFFmpeg, fetchFile } = require("@ffmpeg/ffmpeg");
 
 import { Observable } from "rxjs";
 
 let ffmpegLoaded = false;
-const ffmpeg = createFFmpeg({ log: true });
+const ffmpeg = createFFmpeg({ log: false });
 
 async function loadFFMPEG() {
   if (ffmpegLoaded) {
@@ -65,7 +68,8 @@ async function extractTrackFromMP3(file, trackName, start, end, basePath) {
   await loadFFMPEG();
   ffmpeg.FS("writeFile", file, await fetchFile(basePath + file));
   const output = `${trackName}.mp3`;
-  await ffmpeg.run("-i", file, "-ss", start, end ? "-t" : "", end, output);
+  console.log('EXTRACTING ', start, end);
+  await ffmpeg.run("-i", file, "-ss", start, end ? "-t" : "", end || '', output);
   await fs.promises.writeFile(basePath + output, ffmpeg.FS("readFile", output));
   return output;
 }
@@ -73,12 +77,63 @@ async function extractTrackFromMP3(file, trackName, start, end, basePath) {
 async function tagTrack(file, album, track, imageFile, basePath) {
   console.log("TAG", file);
   return NodeID3.write(
-    Object.assign(album, { title: track.name, APIC: imageFile }),
+    Object.assign(album, { title: track.title, APIC: imageFile }),
     basePath + file
   );
 }
 
-let basePath = "./";
+let basePath = "./music";
+
+function getFolderList(path) {
+  return fs.readdirSync(path, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name)
+}
+
+export async function getArtistList() {
+  return getFolderList(basePath);
+}
+
+export async function getAlbumList(artist) {
+  return getFolderList(path.join(basePath, artist)).map((folder) => {
+    return {
+      album: folder,
+      artist,
+    }
+  });
+}
+
+export async function getAlbumDetail(artist, album) {
+  const items = fs.readdirSync(path.join(basePath, artist, album), {withFileTypes: true})
+    .filter(dirent => dirent.isFile())
+    .map(dirent => dirent.name);
+  
+  return {
+    original: items.includes('original.mp4') ?'original.mp4': undefined,
+    audio: items.includes('audio.mp3') ? 'audio.mp3': undefined,
+    thumbnail: items.includes('thumbnail.jpg') ? 'thumbnail.jpg': undefined,
+    tracks: items.filter(i => path.extname(i) === '.mp3' && i !== 'audio.mp3')
+  };
+}
+
+export async function getThumbnail(artist, album) {
+  return path.join(basePath, artist, album, 'thumbnail.jpg');
+}
+
+export async function getTrack(artist, album, track) {
+  return path.join(basePath, artist, album, track);
+}
+
+export async function getArchiveAlbum(artist, album) {
+  const archive = new zip();
+  const albumPath = path.join(basePath, artist, album);
+  fs.readdirSync(albumPath, {withFileTypes: true})
+    .filter(dirent => dirent.isFile())
+    .map(dirent => dirent.name).forEach((file) => {
+      archive.addLocalFile(path.join(albumPath, file));
+    })
+  return archive.toBuffer();
+}
 
 export function yt_tracksplitter(model) {
   return new Observable(async (sub) => {
@@ -115,9 +170,9 @@ export function yt_tracksplitter(model) {
       const nextTrack = model.tracks[i + 1];
       const fileTrack = await extractTrackFromMP3(
         audioFile,
-        track.name,
+        track.title,
         track.ss,
-        nextTrack ? nextTrack.ss : "",
+        (track.t) ? track.t : (nextTrack ? nextTrack.ss : undefined),
         folder
       );
       const success = await tagTrack(
@@ -132,6 +187,7 @@ export function yt_tracksplitter(model) {
       }
     }
     sub.next({status: 'Complete'});
+    sub.next({status: 'Done'});
     sub.complete();
   });
 }

@@ -16,6 +16,7 @@
     "@ffmpeg/core": "^0.8.5",
     "@ffmpeg/ffmpeg": "^0.9.6",
     "@nodegui/nodegui": "^0.28.0",
+    "adm-zip": "^0.5.1",
     "cors": "^2.8.5",
     "esm": "^3.2.25",
     "express": "^4.17.1",
