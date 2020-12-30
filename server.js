@@ -1,4 +1,4 @@
-import { yt_tracksplitter, getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, ffmpegSubject } from "./splitter";
+import { yt_tracksplitter, getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, ffmpegSubject, getPasePath } from "./splitter";
 
 const express = require("express");
 const cors = require("cors");
@@ -66,7 +66,7 @@ app.get('/explorer/:artist/albums/:album/thumbnail', async (req, res) => {
 
   let n = await getThumbnail(artist, album);
   n = '/' + n;
-  res.sendFile(n, {root: __dirname});
+  res.sendFile(n, {root: getPasePath()});
 })
 
 app.get('/explorer/:artist/albums/:album/:track', async (req, res) => {
@@ -76,7 +76,7 @@ app.get('/explorer/:artist/albums/:album/:track', async (req, res) => {
 
   let n = await getTrack(artist,album,track);
   n = '/' + n;
-  res.sendFile(n, {root: __dirname});
+  res.sendFile(n, {root: getPasePath()});
 });
 
 app.get('/info', basicAuth(auth), async (req,res) => {
