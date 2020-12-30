@@ -1,15 +1,16 @@
-import { yt_tracksplitter, getArchiveAlbum, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack } from "./main";
-import {Observable} from 'rxjs';
+import { yt_tracksplitter, getArchiveAlbum, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack } from "./splitter";
 
 const express = require("express");
 const cors = require("cors");
+const basicAuth = require('express-basic-auth')
+
 const app = express();
 const port = 3000;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
+app.use(basicAuth({users: { 'user': process.env.PASSWORD ?? '12345678'}}))
 
 let clients = [];
 
