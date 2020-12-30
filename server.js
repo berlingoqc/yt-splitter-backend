@@ -10,13 +10,17 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(basicAuth({users: { 'user': process.env.PASSWORD ?? '12345678'}}))
+app.use(basicAuth({users: { 'user': process.env.PASSWORD || '12345678'}}))
 
 let clients = [];
 
 function sendEventsToAll(newNest) {
   clients.forEach(c => c.res.write(`data: ${JSON.stringify(newNest)}\n\n`))
 }
+
+app.get('/', (req, res) => {
+  res.send(JSON.stringify({version: 0}));
+})
 
 app.get('/explorer/artist', async (req, res) => {
   const artists = await getArtistList();

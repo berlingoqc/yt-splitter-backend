@@ -195,3 +195,11 @@ export function yt_tracksplitter(model) {
 export async function setBasePath(path) {
   basePath = path;
 }
+
+export function getPasePath() {
+  return basePath;
+}
+
+
+if (!fs.existsSync(basePath))
+  fs.mkdirSync(basePath, { recursive: true });
