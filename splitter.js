@@ -206,7 +206,7 @@ export function yt_tracksplitter() {
     const imageFile = "thumbnail.jpg";
 
     sub.next({status: 'Download image'});
-    await downloadImage(image.url, folder + imageFile);
+    await downloadImage(image.url, path.join(folder, imageFile));
     sub.next({status: 'Complete'});
 
     sub.next({status: 'Downloading youtube video to mp4'});
