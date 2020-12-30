@@ -12,12 +12,19 @@ const NodeID3 = require("node-id3");
 
 const zip = require("adm-zip");
 
+const moment = require('moment');
+
 const { createFFmpeg, fetchFile } = require("@ffmpeg/ffmpeg");
 
-import { Observable } from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 
 let ffmpegLoaded = false;
-const ffmpeg = createFFmpeg({ log: false });
+
+export const ffmpegSubject = new BehaviorSubject();
+
+const ffmpeg = createFFmpeg({ log: false, logger: ({message}) => {
+  ffmpegSubject.next(message);
+} });
 
 async function loadFFMPEG() {
   if (ffmpegLoaded) {
@@ -69,7 +76,13 @@ async function extractTrackFromMP3(file, trackName, start, end, basePath) {
   ffmpeg.FS("writeFile", file, await fetchFile(basePath + file));
   const output = `${trackName}.mp3`;
   console.log('EXTRACTING ', start, end);
-  await ffmpeg.run("-i", file, "-ss", start, end ? "-t" : "", end || '', output);
+  //if(end) {
+  //  const startTime = moment(start, "HH:mm:ss");
+  //  const endTime = moment(end, "HH:mm:ss");
+  //  end = moment.utc(endTime.diff(startTime)).format("HH:mm:ss");
+  //  console.log('DURATION', end);
+  //}
+  await ffmpeg.run("-i", file, "-ss", start, end ? "-to" : "", end || '', "-acodec", "copy", output);
   await fs.promises.writeFile(basePath + output, ffmpeg.FS("readFile", output));
   return output;
 }
@@ -135,8 +148,48 @@ export async function getArchiveAlbum(artist, album) {
   return archive.toBuffer();
 }
 
-export function yt_tracksplitter(model) {
-  return new Observable(async (sub) => {
+
+export class YtTrackProcessItem {
+  operation;
+  complete;
+  items = [];
+}
+
+export class YtTrackProcess {
+  name = '';
+  items = [];
+  error;
+  queue = [];
+}
+
+const completeList = [];
+
+let currentSplitter;
+let currentSub;
+
+export let currentProcessInfo = new YtTrackProcess();
+export const subjectTrackSplitter = new BehaviorSubject();
+
+export function yt_tracksplitter_add(data) {
+  currentProcessInfo.queue.push(data);
+  subjectTrackSplitter.next(currentProcessInfo);
+  return yt_tracksplitter();
+}
+
+export function yt_tracksplitter() {
+  if(currentSplitter) {
+    return;
+  }
+  if(currentProcessInfo.queue.length < 1) {
+    return;
+  }
+  const model = currentProcessInfo.queue.splice(0,1)[0];
+  if(!model) {
+    return;
+  }
+  currentProcessInfo.name = `${model.album.artist} ${model.album.album}`;
+  subjectTrackSplitter.next(currentProcessInfo);
+  currentSplitter = new Observable(async (sub) => {
     const folder =
       basePath + "/" + model.album.artist + "/" + model.album.album + "/";
 
@@ -148,6 +201,7 @@ export function yt_tracksplitter(model) {
     sub.next({status: 'Get video info'});
     const info = await getVideoInfo(model.v);
     sub.next({status: 'Complete'});
+
     const image = info.videoDetails.thumbnails[0];
     const imageFile = "thumbnail.jpg";
 
@@ -189,7 +243,29 @@ export function yt_tracksplitter(model) {
     sub.next({status: 'Complete'});
     sub.next({status: 'Done'});
     sub.complete();
+    currentSplitter = null;
+    currentSub.unsubscribe();
+    yt_tracksplitter();
   });
+  currentSub = currentSplitter.subscribe((e) => {
+    if(e.status === 'Complete') {
+      if(currentProcessInfo.items[currentProcessInfo.items.length - 1]) {
+        currentProcessInfo.items[currentProcessInfo.items.length -1 ].complete = true;
+      } else {
+        console.log('Cant handle Complete')
+      }
+    } else if(e.status === 'Done') {
+      currentProcessInfo.items = [];
+      currentProcessInfo.name = '';
+      completeList.push(model.album);
+    } else {
+      currentProcessInfo.items.push({operation: e.status, complete: false});
+    }
+
+    subjectTrackSplitter.next(currentProcessInfo);
+  });
+
+  return currentProcessInfo;
 }
 
 export async function setBasePath(path) {

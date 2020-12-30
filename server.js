@@ -1,4 +1,4 @@
-import { yt_tracksplitter, getArchiveAlbum, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack } from "./splitter";
+import { yt_tracksplitter, getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, ffmpegSubject } from "./splitter";
 
 const express = require("express");
 const cors = require("cors");
@@ -7,10 +7,11 @@ const basicAuth = require('express-basic-auth')
 const app = express();
 const port = 3000;
 
+const auth = {users: { 'user': process.env.PASSWORD || '12345678'}};
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(basicAuth({users: { 'user': process.env.PASSWORD || '12345678'}}))
 
 let clients = [];
 
@@ -18,28 +19,37 @@ function sendEventsToAll(newNest) {
   clients.forEach(c => c.res.write(`data: ${JSON.stringify(newNest)}\n\n`))
 }
 
+subjectTrackSplitter.asObservable().subscribe((event) => {
+  console.log('BROADCAST EVENT');
+  sendEventsToAll({ type: 'splitter', data: event});
+});
+
+ffmpegSubject.asObservable().subscribe((event) => {
+  sendEventsToAll({ type: 'ffmpeg', data: event });
+});
+
 app.get('/', (req, res) => {
   res.send(JSON.stringify({version: 0}));
-})
+},basicAuth(auth))
 
-app.get('/explorer/artist', async (req, res) => {
+app.get('/explorer/artist', basicAuth(auth), async (req, res) => {
   const artists = await getArtistList();
   res.send(JSON.stringify(artists));
 })
 
-app.get('/explorer/:artist/albums', async (req, res) => {
+app.get('/explorer/:artist/albums', basicAuth(auth), async (req, res) => {
   const artist = req.params.artist;
   res.send(JSON.stringify(await getAlbumList(artist)));
 })
 
-app.get('/explorer/:artist/albums/:album', async (req, res) => {
+app.get('/explorer/:artist/albums/:album', basicAuth(auth), async (req, res) => {
   const artist = req.params.artist;
   const album = req.params.album;
 
   res.send(JSON.stringify(await getAlbumDetail(artist, album)))
 })
 
-app.get('/explorer/:artist/albums/:album/archive', async (req, res) => {
+app.get('/explorer/:artist/albums/:album/archive', basicAuth(auth), async (req, res) => {
   const artist = req.params.artist;
   const album = req.params.album;
 
@@ -69,20 +79,18 @@ app.get('/explorer/:artist/albums/:album/:track', async (req, res) => {
   res.sendFile(n, {root: __dirname});
 });
 
-app.get('/info', async (req,res) => {
+app.get('/info', basicAuth(auth), async (req,res) => {
   console.log(req.query);
   res.send(JSON.stringify((await getVideoInfo(req.query.v)).videoDetails));
 });
 
-let running = false;
-
-app.post("/download", (req, res) => {
-  running = true;
-  yt_tracksplitter(req.body).subscribe((event) => sendEventsToAll(event), null, () => {
-      clients.forEach((c) => c.res.end());
-      running = false;
-  });
-  res.send(JSON.stringify({}));
+app.post("/download", basicAuth(auth), (req, res) => {
+  const data = yt_tracksplitter_add(req.body);
+  if(data) {
+    res.send(JSON.stringify({status: 'started'}))
+  } else {
+    res.send(JSON.stringify({status: 'queue'}));
+  }
 });
 
 app.get("/events", (req, res) => {
@@ -98,6 +106,11 @@ app.get("/events", (req, res) => {
     res
   };
   clients.push(newClient);
+
+
+  newClient.res.write(`data: ${JSON.stringify({ type: 'splitter', data: currentProcessInfo})}\n\n`)
+
+
   req.on('close', () => {
     clients = clients.filter(c => c.id !== clientId);
   });

@@ -21,6 +21,7 @@
     "esm": "^3.2.25",
     "express": "^4.17.1",
     "express-basic-auth": "^1.2.0",
+    "moment": "^2.29.1",
     "node-id3": "^0.2.1",
     "request": "^2.88.2",
     "rxjs": "^6.6.3",
