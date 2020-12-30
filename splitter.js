@@ -95,7 +95,7 @@ async function tagTrack(file, album, track, imageFile, basePath) {
   );
 }
 
-let basePath = "./music";
+let basePath = process.env.MUSIC_FOLDER || "./music";
 
 function getFolderList(path) {
   return fs.readdirSync(path, { withFileTypes: true })
