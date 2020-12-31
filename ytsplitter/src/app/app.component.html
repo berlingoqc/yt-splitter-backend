@@ -1,0 +1,32 @@
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * The content below * * * * * * * * * * * -->
+<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * -->
+<!-- * * * * * * * * * * and can be replaced. * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * Delete the template below * * * * * * * * * * -->
+<!-- * * * * * * * to get started with your project! * * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<div class="content">
+  <div class="center">
+    <div class="navbar">
+      <button mat-mini-fab [routerLink]="['/']">
+        <mat-icon>home</mat-icon>
+      </button>
+      <button mat-mini-fab [routerLink]="['/', 'splitter']">
+        <mat-icon>cloud_download </mat-icon>
+      </button>
+      <button mat-mini-fab [routerLink]="['/', 'explorer']">
+        <mat-icon>library_music</mat-icon>
+      </button>
+      <button mat-mini-fab [routerLink]="['/', 'context']">
+        <mat-icon>settings</mat-icon>
+      </button>
+    </div>
+  </div>
+  <mat-card class="card content">
+    <router-outlet></router-outlet>
+    <div style="flex-grow: 2"></div>
+    <app-player></app-player>
+  </mat-card>
+</div>
+<div></div>

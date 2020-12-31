@@ -1,0 +1,8 @@
+
+<ul>
+  <li *ngFor="let i of list | async">
+    <a [routerLink]="[i,'albums']">
+    {{i}}
+    </a>
+  </li>
+</ul>

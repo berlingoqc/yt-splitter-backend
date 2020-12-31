@@ -1,0 +1,49 @@
+<div *ngIf="detail">
+  <div class="top-card">
+
+    <app-thumbnail style="width: 200px" [data]="thumbnail"></app-thumbnail>
+    <div style="width: 100%;">
+      <div class="title">
+        <span>
+          {{ artist }}
+        </span>
+        <br />
+        <span>
+          {{ album }}
+        </span>
+      </div>
+      <div class="buttons">
+        <div>
+        <button mat-mini-fab (click)="downloadArchive()">
+          <mat-icon>archive</mat-icon>
+        </button>
+
+        </div>
+     </div>
+    </div>
+  </div>
+
+  <div>
+    <mat-list>
+      <mat-list-item *ngFor="let t of detail.tracks" class="track">
+        <div>
+          {{ t }}
+        </div>
+        <span style="flex-grow: 2;"></span>
+        <div class="buttons" style="width: auto;">
+          <div class="inner">
+          <button mat-mini-fab (click)="playTrack(t)">
+            <mat-icon>play_arrow</mat-icon>
+          </button>
+          </div>
+          <div class="inner">
+         <button mat-mini-fab (click)="downloadTrack(t)">
+            <mat-icon>download</mat-icon>
+          </button>
+
+          </div>
+       </div>
+      </mat-list-item>
+    </mat-list>
+  </div>
+</div>

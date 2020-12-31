@@ -1,0 +1,13 @@
+
+<ul>
+  <li [ngClass]="(i == selectedIndex) ? 'selected': ''" *ngFor="let t of tumbnails; index as i">
+    Height {{t.height}} Width {{t.width}}
+    <button (click)="changeSelection(i)">Sélectionner</button>
+  </li>
+</ul>
+
+<div style="width: 500px;">
+  <img #img [src]="(tumbnails[selectedIndex].url) ? context.url + '/proxy-download?url=' + tumbnails[selectedIndex].url : ''">
+</div>
+
+<button (click)="send()">CLICK</button>

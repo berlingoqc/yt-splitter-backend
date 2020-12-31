@@ -1,0 +1,23 @@
+.top-card {
+  display: flex;
+  flex-direction: row;
+}
+
+.title {
+  margin: 5px;
+}
+
+.buttons {
+  width: 100%;
+  display: flex;
+  justify-content: space-evenly;
+
+  .inner {
+    margin-right: 5px;
+  }
+}
+
+.track {
+  display: flex;
+  flex-direction: row;
+}

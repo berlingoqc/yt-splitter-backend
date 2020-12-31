@@ -1,0 +1,24 @@
+
+.center {
+  min-height: 50%;
+  max-height: 80%;
+  height: 80%;
+}
+.card {
+  @extend .center;
+
+  width: 70%;
+  display: flex;
+  flex-direction: column;
+  align-items: initial;
+}
+
+.navbar {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  * {
+    margin-bottom: 10px;
+  }
+}

@@ -1,0 +1,9 @@
+@import '~@angular/material/theming';
+
+@mixin custom-stepper-theme() {
+  .mat-horizontal-stepper-header {
+    pointer-events: none;
+  }
+}
+
+@include custom-stepper-theme();

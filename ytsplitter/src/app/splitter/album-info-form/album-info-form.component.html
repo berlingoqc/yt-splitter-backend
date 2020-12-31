@@ -1,0 +1,33 @@
+<div [formGroup]="myForm">
+  <mat-form-field>
+    <mat-label>Album</mat-label>
+    <input matInput formControlName="album" />
+  </mat-form-field>
+  <mat-form-field>
+    <mat-label>Artist</mat-label>
+    <input matInput formControlName="artist"/>
+  </mat-form-field>
+  <button (click)="fromClipboard()">Clipboard</button>
+  <cdk-virtual-scroll-viewport [itemSize]="4" style="height: 300px;">
+    <ng-container *ngFor="let t of $any(myForm.controls.tracks).controls; index as i" [formGroup]="$any(myForm.controls.tracks).at(i)">
+      <mat-form-field>
+        <mat-label>SS</mat-label>
+        <app-track-ss-input formControlName="ss" required></app-track-ss-input>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>T</mat-label>
+        <app-track-ss-input formControlName="t"></app-track-ss-input>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Titre</mat-label>
+        <input matInput formControlName="title"/>
+      </mat-form-field>
+      <div>
+        <button mat-icon-button (click)="deleteTrack(i)"><mat-icon>delete</mat-icon></button>
+      </div>
+    </ng-container>
+    <div>
+      <button mat-icon-button (click)="addTrack()"><mat-icon>add</mat-icon></button>
+    </div>
+  </cdk-virtual-scroll-viewport>
+</div>

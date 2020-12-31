@@ -1,0 +1,41 @@
+
+<mat-horizontal-stepper [linear]=true>
+  <mat-step [stepControl]="formFirstStep" [editable]="false">
+    <ng-template matStepLabel>Séléctionner</ng-template>
+    <app-select-url [myForm]="formFirstStep"></app-select-url>
+
+    <div>
+      <button mat-stroked-button matStepperNext (click)="afterFirstStep()">Prochaine étape</button>
+    </div>
+  </mat-step>
+  <mat-step [stepControl]="formSecondStep" [editable]="false">
+    <ng-template matStepLabel>Remplir information</ng-template>
+    <div *ngIf="info">
+      <button (click)="(info = null)"><mat-icon>close</mat-icon></button>
+      <app-video-info-card [video]="info"></app-video-info-card>
+    </div>
+    <app-album-info-form [myForm]="formSecondStep"></app-album-info-form>
+    <div>
+      <button mat-stroked-button matStepperNext>Prochaine étape</button>
+    </div>
+  </mat-step>
+  <mat-step [editable]="false">
+    <ng-template matStepLabel>Paramètres</ng-template>
+    <app-settings-form></app-settings-form>
+    <app-thumbnail-edit *ngIf="info" [artist]="formSecondStep.value.artist" [album]="formSecondStep.value.album" [tumbnails]="info.thumbnails"></app-thumbnail-edit>
+    <div>
+      <button mat-stroked-button (click)="startDownload()" matStepperNext>Télécharger</button>
+    </div>
+  </mat-step>
+  <mat-step >
+    <ng-template matStepLabel>Processus</ng-template>
+
+    <div *ngIf="statusTrack">
+      {{statusTrack | json}}
+    </div>
+
+    <div>
+      <button mat-stroked-button [routerLink]="['/','splitter']">Voire status</button>
+    </div>
+  </mat-step>
+</mat-horizontal-stepper>

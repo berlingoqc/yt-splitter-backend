@@ -1,0 +1,26 @@
+<div *ngIf="status.name">
+  <div>
+    <h4>In progress : {{status.name}}</h4>
+  </div>
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  <ul>
+    <li *ngFor="let i of status.items">
+      <mat-checkbox [disabled]="true" [checked]="i.complete">{{
+        i.operation
+      }}</mat-checkbox>
+    </li>
+  </ul>
+</div>
+
+<div>
+  <h4>Queue</h4>
+  <ul>
+    <li *ngFor="let q of status.queue">{{q.album | json}}</li>
+  </ul>
+</div>
+
+<div>
+  <ul>
+    <li *ngFor="let q of ffmpegStatus">{{q}}</li>
+  </ul>
+</div>
