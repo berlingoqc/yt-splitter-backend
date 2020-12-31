@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { MusicPlayerService } from 'src/app/music-player/music-player.service';
@@ -42,7 +43,8 @@ export class AlbumDetailComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private musicPlayer: MusicPlayerService,
-    private explorer: MusicExplorerService
+    private explorer: MusicExplorerService,
+    private snackBar: MatSnackBar,
   ) {}
 
   ngOnInit(): void {
@@ -76,12 +78,20 @@ export class AlbumDetailComponent implements OnInit {
 
   async downloadArchive() {
     openDirectory().then(async (dirref) => {
-      const fileHandle = await dirref.getFileHandle('new_file.txt', {create: true});
-      console.log(fileHandle);
-      //const new_file = await dirref.getFile('new_file.txt', {create: true});
-      //const writer = await new_file.createWritable();
-      //await writer.write('testtest');
-      //await writer.close();
+      for(const track of this.detail.tracks) {
+        try {
+        const blob = await this.explorer.downloadTrack(this.artist,this.album, track).toPromise();
+        const new_file = await dirref.getFileHandle(track, {create: true});
+        const writer = await new_file.createWritable();
+        await writer.write(blob);
+        await writer.close();
+        } catch(e) {
+          this.snackBar.open(`Erreur ${track}`, '', { duration: 2000 })
+          return;
+        }
+     }
+
+     this.snackBar.open(`Fin du download de ${this.artist} ${this.album}`, '', { duration: 2000 })
     });
     //this.explorer.downloadArchive(this.artist, this.album).subscribe((data) => {
     //  saveByteArray(data, `${this.artist} ${this.album}.zip`);

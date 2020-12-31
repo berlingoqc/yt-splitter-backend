@@ -7,7 +7,7 @@ import { AlbumDetailResolver, AlbumResolver, ArtistsResolver, MusicExplorerServi
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MusicExplorerRoutingModule } from './music-explorer.routing';
-import { HttpClientModule } from '@angular/common/http';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { ImageModule } from '../thumbnail/thumbnail.component';
 
@@ -23,6 +23,8 @@ import { ImageModule } from '../thumbnail/thumbnail.component';
     MatButtonModule,
     MatListModule,
     MatIconModule,
+
+    MatSnackBarModule,
 
     MusicExplorerRoutingModule
   ],
