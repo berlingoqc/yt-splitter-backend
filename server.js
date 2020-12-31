@@ -1,8 +1,13 @@
+const request = require("request");
+
 import { yt_tracksplitter, getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, ffmpegSubject, getPasePath } from "./splitter";
+import {join} from 'path';
+import { writeFile, writeFileSync, copyFile, existsSync, mkdirSync } from "fs";
 
 const express = require("express");
 const cors = require("cors");
 const basicAuth = require('express-basic-auth')
+const formDataa = require('express-form-data');
 
 const app = express();
 const port = 3000;
@@ -11,6 +16,7 @@ const auth = {users: { 'user': process.env.PASSWORD || '12345678'}};
 
 app.use(cors());
 app.use(express.json());
+app.use(formDataa.parse());
 app.use(express.urlencoded({ extended: false }));
 
 let clients = [];
@@ -31,6 +37,17 @@ ffmpegSubject.asObservable().subscribe((event) => {
 app.get('/', (req, res) => {
   res.send(JSON.stringify({version: 0}));
 },basicAuth(auth))
+
+app.get('/proxy-download', (req, res) => {
+  const url = req.query.url;
+   request.head(url, function (err, res2, body) {
+      request(url)
+        .pipe(res)
+        .on("close", () => {
+          console.log('END');
+        });
+    });
+})
 
 app.get('/explorer/artist', basicAuth(auth), async (req, res) => {
   const artists = await getArtistList();
@@ -68,6 +85,24 @@ app.get('/explorer/:artist/albums/:album/thumbnail', async (req, res) => {
   n = '/' + n;
   res.sendFile(n, {root: getPasePath()});
 })
+
+app.post('/explorer/:artist/albums/:album/thumbnail', (req, res) => {
+  const artist = req.params.artist;
+  const album = req.params.album;
+
+  const filePath = req.files.file.path;
+
+  let dst = join(getPasePath(), artist, album);
+
+  if (!existsSync(dst))
+    mkdirSync(dst, { recursive: true });
+  dst = join(dst, 'thumbnail.jpg');
+  console.log('COPY TO', dst);
+  copyFile(filePath, dst, () => {
+    res.end();
+  })
+
+});
 
 app.get('/explorer/:artist/albums/:album/:track', async (req, res) => {
   const artist = req.params.artist;

@@ -36,7 +36,15 @@ async function loadFFMPEG() {
 
 const downloadImage = function (uri, filename, callback) {
   return new Promise((resolv) => {
-    request.head(uri, function (err, res, body) {
+    try {
+    if(fs.existsSync(filename)) {
+      resolv(filename);
+      return;
+    }
+    } catch(err) {
+
+    }
+   request.head(uri, function (err, res, body) {
       console.log("content-type:", res.headers["content-type"]);
       console.log("content-length:", res.headers["content-length"]);
       request(uri)
@@ -92,7 +100,7 @@ async function tagTrack(file, album, track, imageFile, basePath) {
   console.log("TAG", file);
   return NodeID3.write(
     Object.assign(album, { title: track.title, APIC: imageFile }),
-    basePath + file
+    path.join(basePath, file)
   );
 }
 
@@ -194,8 +202,8 @@ export function yt_tracksplitter() {
     const folder = path.join(basePath, model.album.artist, model.album.album);
 
     sub.next({status: 'Creating folder'});
-    if (fs.existsSync(folder)) fs.rmdirSync(folder, { recursive: true });
-    fs.mkdirSync(folder, { recursive: true });
+    if (!fs.existsSync(folder))
+      fs.mkdirSync(folder, { recursive: true });
     sub.next({status: 'Complete'});
     
     sub.next({status: 'Get video info'});
@@ -229,13 +237,15 @@ export function yt_tracksplitter() {
         (track.t) ? track.t : (nextTrack ? nextTrack.ss : undefined),
         folder
       );
+      console.log(fileTrack,path.join(folder, imageFile));
       const success = await tagTrack(
         fileTrack,
         model.album,
         track,
-        folder + imageFile,
+        path.join(folder, imageFile),
         folder
       );
+      console.log(success);
       if (!success) {
         console.error("SUCCESS FAILED");
       }
@@ -258,6 +268,11 @@ export function yt_tracksplitter() {
       currentProcessInfo.items = [];
       currentProcessInfo.name = '';
       completeList.push(model.album);
+
+      const pscript = path.join(__dirname, 'afterdownload.js')
+      if(fs.existsSync(pscript)) {
+        require(pscript);
+      }
     } else {
       currentProcessInfo.items.push({operation: e.status, complete: false});
     }
