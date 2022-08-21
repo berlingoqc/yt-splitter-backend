@@ -1,21 +1,13 @@
 // ESM syntax is supported.
 export {};
 
-const fs = require("fs");
-const path = require("path");
-
-const request = require("request");
-
-const ytdl = require("ytdl-core");
-
-const NodeID3 = require("node-id3");
-
-const zip = require("adm-zip");
-
-const moment = require('moment');
-
-const { createFFmpeg, fetchFile } = require("@ffmpeg/ffmpeg");
-
+import fs from "fs";
+import path from "path";
+import request from "request";
+import ytdl from "ytdl-core";
+import NodeID3 from "node-id3";
+import zip from "adm-zip";
+import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import { BehaviorSubject, Observable } from "rxjs";
 
 let ffmpegLoaded = false;

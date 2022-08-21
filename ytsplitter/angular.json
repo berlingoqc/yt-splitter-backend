@@ -134,5 +134,8 @@
       }
     }
   },
-  "defaultProject": "ytsplitter"
+  "defaultProject": "ytsplitter",
+  "cli": {
+    "analytics": false
+  }
 }

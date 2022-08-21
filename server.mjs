@@ -1,13 +1,13 @@
-const request = require("request");
+import request from "request";
 
-import { yt_tracksplitter, getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, ffmpegSubject, getPasePath } from "./splitter";
+import { yt_tracksplitter, getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, ffmpegSubject, getPasePath } from "./splitter.mjs";
 import {join} from 'path';
 import { writeFile, writeFileSync, copyFile, existsSync, mkdirSync } from "fs";
 
-const express = require("express");
-const cors = require("cors");
-const basicAuth = require('express-basic-auth')
-const formDataa = require('express-form-data');
+import express from "express";
+import cors from "cors";
+import basicAuth from 'express-basic-auth';
+import formDataa from 'express-form-data';
 
 const app = express();
 const port = 3000;
