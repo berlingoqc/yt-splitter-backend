@@ -134,6 +134,7 @@ app.get("/events", (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.flushHeaders(); // flush the headers to establish SSE with client
+  res.setHeader("Access-Control-Allow-Origin", "*");
   
   const clientId = Date.now();
   const newClient = {

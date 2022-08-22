@@ -8,6 +8,14 @@
     <input matInput formControlName="artist"/>
   </mat-form-field>
   <button (click)="fromClipboard()">Clipboard</button>
+
+  <mat-form-field>
+    <mat-label>Tracks split source</mat-label>
+    <mat-select formControlName="tracks_source">
+      <mat-option value="manual">Manual</mat-option>
+      <mat-option value="chapters">Chapters</mat-option>
+    </mat-select>
+  </mat-form-field>
   <cdk-virtual-scroll-viewport [itemSize]="4" style="height: 300px;">
     <ng-container *ngFor="let t of $any(myForm.controls.tracks).controls; index as i" [formGroup]="$any(myForm.controls.tracks).at(i)">
       <mat-form-field>

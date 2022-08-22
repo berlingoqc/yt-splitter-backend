@@ -17,6 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import {MatSelectModule} from '@angular/material/select';
 
 import { AlbumInfoFormComponent, TrackSSInputComponent } from './album-info-form/album-info-form.component';
 import {ScrollingModule} from '@angular/cdk/scrolling';
@@ -33,6 +34,7 @@ import { ThumbnailEditComponent } from './thumbnail-edit/thumbnail-edit.componen
     MatStepperModule,
     MatInputModule,
     MatIconModule,
+    MatSelectModule,
     MatButtonModule,
     MatCheckboxModule,
     MatRadioModule,

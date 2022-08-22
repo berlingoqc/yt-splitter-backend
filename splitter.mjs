@@ -10,6 +10,9 @@ import zip from "adm-zip";
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import { BehaviorSubject, Observable } from "rxjs";
 
+
+import { exec } from 'child_process';
+
 let ffmpegLoaded = false;
 
 export const ffmpegSubject = new BehaviorSubject();
@@ -46,21 +49,25 @@ const downloadImage = function (uri, filename, callback) {
   });
 };
 
-function downloadYT(v, basePath) {
+function downloadYT(v, basePath, args) {
+  const p = path.join(basePath, "original.mp4");
+  console.log('PATH', p);
   return new Promise((resolver, reject) => {
-    const p = path.join(basePath, "original.mp4");
-    console.log('PATH', p);
-    ytdl(`https://www.youtube.com/watch?v=${v}`)
-      .pipe(fs.createWriteStream(p))
-      .addListener("close", () => {
-        console.log("WRITTING OVER");
-        resolver("original.mp4");
-      });
+    const chapiter_split = args.tracks_source === 'chapters' ? '--split-chapters' : ''
+    exec(`yt-dlp https://www.youtube.com/watch?v=${v} --audio-quality 0 -x --audio-format mp3 -P '${basePath}' ${chapiter_split}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error(error);
+        reject(error);
+      }
+
+      resolver([]);
+    });
   });
 }
 
 export function getVideoInfo(v) {
-  return ytdl.getInfo(`https://www.youtube.com/watch?v=${v}`);
+  const d = ytdl.getInfo(`https://www.youtube.com/watch?v=${v}`);
+  return d;
 }
 
 async function convertToMP3(file, basePath) {
@@ -205,43 +212,87 @@ export function yt_tracksplitter() {
     const image = info.videoDetails.thumbnails[0];
     const imageFile = "thumbnail.jpg";
 
+
+    if (model.tracks_source === "chapters") {
+      sub.next({status: 'Getting chapiters info'});
+      const markersMap = info.response?.playerOverlays?.playerOverlayRenderer?.decoratedPlayerBarRenderer?.decoratedPlayerBarRenderer?.playerBar.multiMarkersPlayerBarRenderer.markersMap;
+      if (markersMap)  {
+        let chapters = markersMap.find(x => x.key === "DESCRIPTION_CHAPTERS");
+        if (chapters) {
+          console.log('Chapters');
+          let chapters_data = chapters.value.chapters;
+          let tracks = chapters_data.map((data) => {
+            return { title: data.chapterRenderer.title.simpleText }
+          });
+          model.tracks = tracks;
+        }
+      }
+
+      sub.next({status: 'Complete'});
+    }
+
+
     sub.next({status: 'Download image'});
     await downloadImage(image.url, path.join(folder, imageFile));
     sub.next({status: 'Complete'});
 
     sub.next({status: 'Downloading youtube video to mp4'});
-    const file = await downloadYT(model.v, folder);
+    const file = await downloadYT(model.v, folder, model);
     sub.next({status: 'Complete'});
 
-    sub.next({status: 'Converting to mp3'});
-    const audioFile = await convertToMP3(file, folder);
-    sub.next({status: 'Complete'});
+    if (model.no_video == false) {
+      sub.next({status: 'Converting to mp3'});
+      const audioFile = await convertToMP3(file, folder);
+      sub.next({status: 'Complete'});
+    }
 
-
-    sub.next({status: 'Splittings track'});
-    for (let i = 0; i < model.tracks.length; i++) {
-      const track = model.tracks[i];
-      const nextTrack = model.tracks[i + 1];
-      const fileTrack = await extractTrackFromMP3(
-        audioFile,
-        track.title,
-        track.ss,
-        (track.t) ? track.t : (nextTrack ? nextTrack.ss : undefined),
-        folder
-      );
-      console.log(fileTrack,path.join(folder, imageFile));
-      const success = await tagTrack(
-        fileTrack,
-        model.album,
-        track,
-        path.join(folder, imageFile),
-        folder
-      );
-      console.log(success);
-      if (!success) {
-        console.error("SUCCESS FAILED");
+    if (model.tracks_source == "manual") {
+      sub.next({status: 'Splittings track'});
+      for (let i = 0; i < model.tracks.length; i++) {
+        const track = model.tracks[i];
+        const nextTrack = model.tracks[i + 1];
+        const fileTrack = await extractTrackFromMP3(
+          audioFile,
+          track.title,
+          track.ss,
+          (track.t) ? track.t : (nextTrack ? nextTrack.ss : undefined),
+          folder
+        );
+        console.log(fileTrack,path.join(folder, imageFile));
+        const success = await tagTrack(
+          fileTrack,
+          model.album,
+          track,
+          path.join(folder, imageFile),
+          folder
+        );
+        console.log(success);
+        if (!success) {
+          console.error("SUCCESS FAILED");
+        }
+      }
+    } else if (model.tracks_source === "chapters") {
+      // RENAME ALL FILE TO JUST THE TRACK NAME
+      const files = fs.readdirSync(folder)
+      for (let i = 0; i < files.length; i++) {
+        const track = model.tracks.find(x => {
+          return files[i].includes(x.title)
+        })
+        if (track) {
+          const fileTrack = path.join(folder, track.title) + '.mp3'
+          fs.renameSync(path.join(folder,files[i]), fileTrack);
+          const success = await tagTrack(
+            track.title + '.mp3',
+            model.album,
+            track,
+            path.join(folder, imageFile),
+            folder
+          );
+          console.log(success);
+        }
       }
     }
+
     sub.next({status: 'Complete'});
     sub.next({status: 'Done'});
     sub.complete();
@@ -261,10 +312,12 @@ export function yt_tracksplitter() {
       currentProcessInfo.name = '';
       completeList.push(model.album);
 
+      /* TODO enable post download scripting
       const pscript = path.join(__dirname, 'afterdownload.js')
       if(fs.existsSync(pscript)) {
         require(pscript);
       }
+      */
     } else {
       currentProcessInfo.items.push({operation: e.status, complete: false});
     }

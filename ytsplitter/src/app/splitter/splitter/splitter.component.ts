@@ -18,6 +18,7 @@ export class SplitterComponent implements OnInit {
   formSecondStep = new FormGroup({
     album: new FormControl(null, [Validators.required]),
     artist: new FormControl(null, [Validators.required]),
+    tracks_source: new FormControl("manual", [Validators.required]),
     tracks: new FormArray([]),
   });
 
@@ -54,9 +55,10 @@ export class SplitterComponent implements OnInit {
         album: second.album,
         artist: second.artist,
       },
+      tracks_source: second.tracks_source,
       tracks: second.tracks
     }
-    this.splitterService.download(data).subscribe((status) => {
+    this.splitterService.download(data).subscribe((status) => {
       this.statusTrack = status;
     })
   }
