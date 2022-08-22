@@ -74,10 +74,10 @@ async function extractTrackFromMP3(file, trackName, start, end, basePath) {
   });
 }
 
-async function tagTrack(file, album, track, imageFile, basePath) {
+async function tagTrack(file, album, track, imageFile, index, basePath) {
   console.log("TAG", file);
   return NodeID3.write(
-    Object.assign(album, { title: track.title, APIC: imageFile }),
+    Object.assign(album, { title: track.title, APIC: imageFile, TRCK: index }),
     path.join(basePath, file)
   );
 }
@@ -233,6 +233,7 @@ export function yt_tracksplitter() {
           model.album,
           track,
           path.join(folder, imageFile),
+          i + 1,
           folder
         );
         console.log(success);
@@ -255,6 +256,7 @@ export function yt_tracksplitter() {
             model.album,
             track,
             path.join(folder, imageFile),
+            i + 1,
             folder
           );
           console.log(success);
