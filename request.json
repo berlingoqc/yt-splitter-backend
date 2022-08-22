@@ -4,8 +4,7 @@
     "album": "Brasilian Skies (1978)",
     "artist": "Masayoshi Takanaka"
   },
-  "tracks_source": "chapters",
-  "no_video": true,
+  "tracks_source": "manual",
   "tracks": [
     { "ss": "00:00:00", "t": "00:07:53", "title": "Beleze Pula" },
     { "ss": "00:07:53", "t": "00:13:45", "title": "Brasilian Skies" },

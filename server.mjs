@@ -1,8 +1,8 @@
 import request from "request";
 
-import { yt_tracksplitter, getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, ffmpegSubject, getPasePath } from "./splitter.mjs";
+import { getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, getPasePath } from "./splitter.mjs";
 import {join} from 'path';
-import { writeFile, writeFileSync, copyFile, existsSync, mkdirSync } from "fs";
+import { copyFile, existsSync, mkdirSync } from "fs";
 
 import express from "express";
 import cors from "cors";
@@ -28,10 +28,6 @@ function sendEventsToAll(newNest) {
 subjectTrackSplitter.asObservable().subscribe((event) => {
   console.log('BROADCAST EVENT');
   sendEventsToAll({ type: 'splitter', data: event});
-});
-
-ffmpegSubject.asObservable().subscribe((event) => {
-  sendEventsToAll({ type: 'ffmpeg', data: event });
 });
 
 app.get('/', (req, res) => {

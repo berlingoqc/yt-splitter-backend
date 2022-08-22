@@ -6,30 +6,19 @@
   "main": "index.js",
   "module": "main.js",
   "scripts": {
-    "run": "node --experimental-wasm-threads --experimental-wasm-bulk-memory ./index_cmd.js",
-    "gui": "qode --experimental-wasm-threads --experimental-wasm-bulk-memory ./index.js",
-    "pack": "nodegui-packer --pack ./dist",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "serve": "node ./server.mjs"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ffmpeg/core": "^0.11.0",
-    "@ffmpeg/ffmpeg": "^0.11.1",
-    "@nodegui/nodegui": "^0.28.0",
-    "adm-zip": "^0.5.1",
+    "adm-zip": "^0.5.9",
     "cors": "^2.8.5",
-    "esm": "^3.2.25",
-    "express": "^4.17.1",
-    "express-basic-auth": "^1.2.0",
-    "express-form-data": "^2.0.14",
-    "moment": "^2.29.1",
-    "node-id3": "^0.2.1",
+    "express": "^4.18.1",
+    "express-basic-auth": "^1.2.1",
+    "express-form-data": "^2.0.18",
+    "node-id3": "^0.2.3",
     "request": "^2.88.2",
-    "rxjs": "^6.6.3",
-    "ytdl-core": "^4.2.1"
-  },
-  "devDependencies": {
-    "@nodegui/packer": "^1.4.1"
+    "rxjs": "^7.5.6",
+    "ytdl-core": "^4.11.0"
   }
 }

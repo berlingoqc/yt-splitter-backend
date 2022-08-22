@@ -7,27 +7,9 @@ import request from "request";
 import ytdl from "ytdl-core";
 import NodeID3 from "node-id3";
 import zip from "adm-zip";
-import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import { BehaviorSubject, Observable } from "rxjs";
 
-
 import { exec } from 'child_process';
-
-let ffmpegLoaded = false;
-
-export const ffmpegSubject = new BehaviorSubject();
-
-const ffmpeg = createFFmpeg({ log: false, logger: ({message}) => {
-  ffmpegSubject.next(message);
-} });
-
-async function loadFFMPEG() {
-  if (ffmpegLoaded) {
-    return;
-  }
-  await ffmpeg.load();
-  ffmpegLoaded = true;
-}
 
 const downloadImage = function (uri, filename, callback) {
   return new Promise((resolv) => {
@@ -54,13 +36,13 @@ function downloadYT(v, basePath, args) {
   console.log('PATH', p);
   return new Promise((resolver, reject) => {
     const chapiter_split = args.tracks_source === 'chapters' ? '--split-chapters' : ''
-    exec(`yt-dlp https://www.youtube.com/watch?v=${v} --audio-quality 0 -x --audio-format mp3 -P '${basePath}' ${chapiter_split}`, (error, stdout, stderr) => {
+    exec(`yt-dlp https://www.youtube.com/watch?v=${v} --audio-quality 0 -x --audio-format mp3 -P '${basePath}' -o 'audio.%(ext)s' ${chapiter_split}`, (error, stdout, stderr) => {
       if (error) {
         console.error(error);
         reject(error);
       }
 
-      resolver([]);
+      resolver('original.mp3');
     });
   });
 }
@@ -70,29 +52,19 @@ export function getVideoInfo(v) {
   return d;
 }
 
-async function convertToMP3(file, basePath) {
-  await loadFFMPEG();
-  ffmpeg.FS("writeFile", file, await fetchFile(path.join(basePath, file)));
-  const output = "audio.mp3";
-  await ffmpeg.run("-i", file, output);
-  await fs.promises.writeFile(path.join(basePath,output), ffmpeg.FS("readFile", output));
-  return output;
-}
-
 async function extractTrackFromMP3(file, trackName, start, end, basePath) {
-  await loadFFMPEG();
-  ffmpeg.FS("writeFile", file, await fetchFile(path.join(basePath, file)));
   const output = `${trackName}.mp3`;
   console.log('EXTRACTING ', start, end);
-  //if(end) {
-  //  const startTime = moment(start, "HH:mm:ss");
-  //  const endTime = moment(end, "HH:mm:ss");
-  //  end = moment.utc(endTime.diff(startTime)).format("HH:mm:ss");
-  //  console.log('DURATION', end);
-  //}
-  await ffmpeg.run("-i", file, "-ss", start, end ? "-to" : "", end || '', "-acodec", "copy", output);
-  await fs.promises.writeFile(path.join(basePath, output), ffmpeg.FS("readFile", output));
-  return output;
+  return new Promise((resolver, reject) => {
+    exec(`ffmpeg -i '${path.join(basePath, file)}' -y -ss ${start} ${end ? "-to" : ""} ${end || ''} -acodec copy '${path.join(basePath, output)}'`, (error, stdout) => {
+      if (error) {
+        console.error(error);
+        reject(error);
+      }
+
+      resolver(output);
+    });
+  });
 }
 
 async function tagTrack(file, album, track, imageFile, basePath) {
@@ -240,11 +212,6 @@ export function yt_tracksplitter() {
     const file = await downloadYT(model.v, folder, model);
     sub.next({status: 'Complete'});
 
-    if (model.no_video == false) {
-      sub.next({status: 'Converting to mp3'});
-      const audioFile = await convertToMP3(file, folder);
-      sub.next({status: 'Complete'});
-    }
 
     if (model.tracks_source == "manual") {
       sub.next({status: 'Splittings track'});
@@ -252,7 +219,7 @@ export function yt_tracksplitter() {
         const track = model.tracks[i];
         const nextTrack = model.tracks[i + 1];
         const fileTrack = await extractTrackFromMP3(
-          audioFile,
+          'audio.mp3',
           track.title,
           track.ss,
           (track.t) ? track.t : (nextTrack ? nextTrack.ss : undefined),
@@ -291,6 +258,10 @@ export function yt_tracksplitter() {
           console.log(success);
         }
       }
+    }
+
+    if (!model.keep_audio) {
+      fs.rmSync(path.join(folder, 'audio.mp3'))
     }
 
     sub.next({status: 'Complete'});
