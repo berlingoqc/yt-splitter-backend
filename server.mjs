@@ -6,7 +6,6 @@ import { copyFile, existsSync, mkdirSync } from "fs";
 
 import express from "express";
 import cors from "cors";
-import basicAuth from 'express-basic-auth';
 import formDataa from 'express-form-data';
 
 const app = express();
@@ -32,7 +31,7 @@ subjectTrackSplitter.asObservable().subscribe((event) => {
 
 app.get('/', (req, res) => {
   res.send(JSON.stringify({version: 0}));
-},basicAuth(auth))
+})
 
 app.get('/proxy-download', (req, res) => {
   const url = req.query.url;
@@ -45,17 +44,17 @@ app.get('/proxy-download', (req, res) => {
     });
 })
 
-app.get('/explorer/artist', basicAuth(auth), async (req, res) => {
+app.get('/explorer/artist', async (req, res) => {
   const artists = await getArtistList();
   res.send(JSON.stringify(artists));
 })
 
-app.get('/explorer/:artist/albums', basicAuth(auth), async (req, res) => {
+app.get('/explorer/:artist/albums', async (req, res) => {
   const artist = req.params.artist;
   res.send(JSON.stringify(await getAlbumList(artist)));
 })
 
-app.get('/explorer/:artist/albums/:album', basicAuth(auth), async (req, res) => {
+app.get('/explorer/:artist/albums/:album', async (req, res) => {
   const artist = req.params.artist;
   const album = req.params.album;
 
@@ -110,12 +109,12 @@ app.get('/explorer/:artist/albums/:album/:track', async (req, res) => {
   res.sendFile(n, {root: getPasePath()});
 });
 
-app.get('/info', basicAuth(auth), async (req,res) => {
+app.get('/info', async (req,res) => {
   console.log(req.query);
   res.send(await getVideoInfo(req.query.v));
 });
 
-app.post("/download", basicAuth(auth), (req, res) => {
+app.post("/download", (req, res) => {
   const data = yt_tracksplitter_add(req.body);
   if(data) {
     res.send(JSON.stringify({status: 'started'}))
