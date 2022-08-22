@@ -2,6 +2,6 @@ WQ/
 node_modules/
 deploy/
 dist/
-afterdownload.js
+afterdownload.*
 music/
 request.json
