@@ -14,15 +14,13 @@ import { HomeComponent } from './home/home.component';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MusicPlayerModule } from './music-player/music-player.module';
-import { ContextFormComponent } from './context-form/context-form.component';
-import { ContextGuard } from './service/context.guard';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { BasicAuthInterceptor } from './service/basic-auth.interceptor';
 
 @NgModule({
-  declarations: [AppComponent, ContextFormComponent],
+  declarations: [AppComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
@@ -49,17 +47,11 @@ import { BasicAuthInterceptor } from './service/basic-auth.interceptor';
         component: HomeComponent,
     },
     {
-      path: 'context',
-      component: ContextFormComponent,
-    },
-    {
         path: 'splitter',
-        canActivate: [ContextGuard],
         loadChildren: () => import('./splitter/splitter.module').then((m) => m.SplitterModule),
     },
     {
        path: 'explorer',
-       canActivate: [ContextGuard],
        loadChildren: () => import('./music-explorer/music-explorer.module').then((m) => m.MusicExplorerModule),
     }
 ], { relativeLinkResolution: 'legacy' }),

@@ -62,7 +62,7 @@ app.get('/explorer/:artist/albums/:album', basicAuth(auth), async (req, res) => 
   res.send(JSON.stringify(await getAlbumDetail(artist, album)))
 })
 
-app.get('/explorer/:artist/albums/:album/archive', basicAuth(auth), async (req, res) => {
+app.get('/explorer/:artist/albums/:album/archive', async (req, res) => {
   const artist = req.params.artist;
   const album = req.params.album;
 
@@ -112,7 +112,7 @@ app.get('/explorer/:artist/albums/:album/:track', async (req, res) => {
 
 app.get('/info', basicAuth(auth), async (req,res) => {
   console.log(req.query);
-  res.send(JSON.stringify((await getVideoInfo(req.query.v)).videoDetails));
+  res.send(await getVideoInfo(req.query.v));
 });
 
 app.post("/download", basicAuth(auth), (req, res) => {
@@ -129,8 +129,8 @@ app.get("/events", (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
   res.flushHeaders(); // flush the headers to establish SSE with client
-  res.setHeader("Access-Control-Allow-Origin", "*");
   
   const clientId = Date.now();
   const newClient = {

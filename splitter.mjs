@@ -48,8 +48,15 @@ function downloadYT(v, basePath, args) {
 }
 
 export function getVideoInfo(v) {
-  const d = ytdl.getInfo(`https://www.youtube.com/watch?v=${v}`);
-  return d;
+  return new Promise((resolv, reject) => {
+    exec(`yt-dlp --dump-json https://www.youtube.com/watch?v=${v}`, (error, stdout) => {
+      if (error) {
+        console.error(error);
+        reject(error);
+      }
+      resolv(JSON.parse(stdout))
+    })
+  });
 }
 
 async function extractTrackFromMP3(file, trackName, start, end, basePath) {
@@ -181,23 +188,18 @@ export function yt_tracksplitter() {
     const info = await getVideoInfo(model.v);
     sub.next({status: 'Complete'});
 
-    const image = info.videoDetails.thumbnails[0];
+    const image = info.thumbnails[0];
     const imageFile = "thumbnail.jpg";
 
 
     if (model.tracks_source === "chapters") {
       sub.next({status: 'Getting chapiters info'});
-      const markersMap = info.response?.playerOverlays?.playerOverlayRenderer?.decoratedPlayerBarRenderer?.decoratedPlayerBarRenderer?.playerBar.multiMarkersPlayerBarRenderer.markersMap;
-      if (markersMap)  {
-        let chapters = markersMap.find(x => x.key === "DESCRIPTION_CHAPTERS");
-        if (chapters) {
-          console.log('Chapters');
-          let chapters_data = chapters.value.chapters;
-          let tracks = chapters_data.map((data) => {
-            return { title: data.chapterRenderer.title.simpleText }
+      const chapters = info.chapters;
+      if (chapters) {
+          let tracks = chapters.map((data) => {
+            return { title: data.title }
           });
           model.tracks = tracks;
-        }
       }
 
       sub.next({status: 'Complete'});
@@ -288,9 +290,6 @@ export function yt_tracksplitter() {
         exec('afterdownload.sh', (error) => {
           console.log('After download is over');
         })
-      }
-      if(fs.existsSync(pscript)) {
-        require(pscript);
       }
     } else {
       currentProcessInfo.items.push({operation: e.status, complete: false});
