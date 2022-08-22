@@ -283,12 +283,15 @@ export function yt_tracksplitter() {
       currentProcessInfo.name = '';
       completeList.push(model.album);
 
-      /* TODO enable post download scripting
-      const pscript = path.join(__dirname, 'afterdownload.js')
+      //TODO enable post download scripting
+      if (fs.existsSync('afterdownload.sh')) {
+        exec('afterdownload.sh', (error) => {
+          console.log('After download is over');
+        })
+      }
       if(fs.existsSync(pscript)) {
         require(pscript);
       }
-      */
     } else {
       currentProcessInfo.items.push({operation: e.status, complete: false});
     }
