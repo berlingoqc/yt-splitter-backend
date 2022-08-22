@@ -24,31 +24,24 @@ export class ProcessStatusComponent implements OnInit, OnDestroy {
 
   ffmpegStatus = [];
 
-
-  source: EventSource;
+  sub: Subscription;
 
   constructor(private change: ChangeDetectorRef, private splitterService: SplitterService, private context: ContextService) {
   }
 
   ngOnInit(): void {
-     const source = new EventSource(`${this.context.url}/events`);
-      source.onmessage = (event) => {
-        const msg = JSON.parse(event.data);
-        console.log(msg);
+    this.sub = this.splitterService.downloadEvent2().subscribe((msg) => {
         if(msg.type === 'splitter') {
           this.status = msg.data;
         } else if(msg.type === 'ffmpeg') {
           this.ffmpegStatus = [msg.data];
         }
         this.change.detectChanges();
-      }
-      source.onerror = (event) => {
-      }
-    this.source = source;
+    });
   }
 
   ngOnDestroy(): void {
-    this.source.close();
+    this.sub.unsubscribe();
   }
 
 }

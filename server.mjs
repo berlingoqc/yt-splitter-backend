@@ -123,6 +123,10 @@ app.post("/download", (req, res) => {
   }
 });
 
+app.get('/events/latest', (req, res) => {
+  res.send(JSON.stringify({ type: 'splitter', data: currentProcessInfo}));
+}) 
+
 app.get("/events", (req, res) => {
   // Mandatory headers and http status to keep connection open
   res.setHeader('Cache-Control', 'no-cache');

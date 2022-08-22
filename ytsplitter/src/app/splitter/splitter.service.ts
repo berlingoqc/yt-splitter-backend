@@ -1,6 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { Observable, Subscription } from "rxjs";
+import { interval, Observable, Subscription } from "rxjs";
+import { switchMap } from "rxjs/operators";
 import { getHeaderAuth } from "../service/basic-auth.interceptor";
 import { ContextService } from "../service/context.service";
 
@@ -40,6 +41,14 @@ export class SplitterService {
       }
     })
   }
+
+  downloadEvent2(): Observable<any> {
+    return interval(1000).pipe(
+      switchMap(() => this.httpClient.get(`${this.context.url}/events/latest`))
+    );
+  }
+
+
 
   async getTrackFromClipboard() {
     const text = await navigator.clipboard.readText();
