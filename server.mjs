@@ -10,7 +10,7 @@ import basicAuth from 'express-basic-auth';
 import formDataa from 'express-form-data';
 
 const app = express();
-const port = process.env.PASSWORD || 3000;
+const port = process.env.PORT || 3000;
 
 const auth = {users: { 'user': process.env.PASSWORD || '12345678'}};
 
