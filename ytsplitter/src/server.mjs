@@ -7,6 +7,7 @@ import { copyFile, existsSync, mkdirSync } from "fs";
 import express from "express";
 import cors from "cors";
 import formDataa from 'express-form-data';
+import { parse_tracks_from_text } from "./parser.mjs";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -113,6 +114,10 @@ app.get('/info', async (req,res) => {
   console.log(req.query);
   res.send(await getVideoInfo(req.query.v));
 });
+
+app.post('/parser/tracks', (req, res) => {
+  res.send(parse_tracks_from_text(req.body.text));
+})
 
 app.post("/download", (req, res) => {
   const data = yt_tracksplitter_add(req.body);

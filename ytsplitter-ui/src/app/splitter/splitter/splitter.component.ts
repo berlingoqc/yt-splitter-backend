@@ -24,6 +24,9 @@ export class SplitterComponent implements OnInit {
 
   info: any;
 
+  proposed_tracks: any[];
+  proposed_name: any;
+
   statusTrack: any;
 
   constructor(
@@ -35,13 +38,30 @@ export class SplitterComponent implements OnInit {
 
   afterFirstStep() {
     this.splitterService.getVideoInfo(this.formFirstStep.value.v).subscribe((data) => {
-      this.info = data;
-      if(this.info.media) {
+      this.info = data.info;
+      this.proposed_tracks = data.tracks;
+      this.proposed_name = data.name;
+
+      console.log('PROPSOED TRACKS', this.proposed_tracks)
+
+      if(this.info.title) {
         this.formSecondStep.setValue({
-          album: this.info.media.album ?? '',
-          artist: this.info.media.artist ?? '',
-          tracks: []
+          album: this.proposed_name.album ?? '',
+          artist: this.proposed_name.artist ?? '',
+          tracks_source: 'manual',
+          tracks: [],
         });
+      }
+
+      if (this.proposed_tracks) {
+        const array = this.formSecondStep.controls.tracks as FormArray;
+        for (let track of this.proposed_tracks) {
+          array.push(new FormGroup({
+            ss: new FormControl(track.ss),
+            t: new FormControl(track.t),
+            title: new FormControl(track.title)
+          }));
+        }
       }
     });
   }

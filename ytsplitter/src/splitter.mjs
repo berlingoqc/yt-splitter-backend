@@ -4,12 +4,12 @@ export {};
 import fs from "fs";
 import path from "path";
 import request from "request";
-import ytdl from "ytdl-core";
 import NodeID3 from "node-id3";
 import zip from "adm-zip";
 import { BehaviorSubject, Observable } from "rxjs";
 
 import { exec } from 'child_process';
+import { parse_artist_album_from_text, parse_tracks_from_yt_info } from "./parser.mjs";
 
 const downloadImage = function (uri, filename, callback) {
   return new Promise((resolv) => {
@@ -56,14 +56,20 @@ export function getVideoInfo(v) {
       }
       resolv(JSON.parse(stdout))
     })
-  });
+  }).then((info) => {
+    return {
+      info,
+      tracks: parse_tracks_from_yt_info(info),
+      name: parse_artist_album_from_text(info.title),
+    }
+  }); 
 }
 
 async function extractTrackFromMP3(file, trackName, start, end, basePath) {
   const output = `${trackName}.mp3`;
   console.log('EXTRACTING ', start, end);
   return new Promise((resolver, reject) => {
-    exec(`ffmpeg -i '${path.join(basePath, file)}' -y -ss ${start} ${end ? "-to" : ""} ${end || ''} -acodec copy '${path.join(basePath, output)}'`, (error, stdout) => {
+    exec(`ffmpeg -i '${path.join(basePath, file)}' -y -ss ${start} ${end ? "-to" : ""} ${end || ''} -acodec copy "${path.join(basePath, output).replace('"', "'")}"`, (error, stdout) => {
       if (error) {
         console.error(error);
         reject(error);
@@ -185,7 +191,7 @@ export function yt_tracksplitter() {
     sub.next({status: 'Complete'});
     
     sub.next({status: 'Get video info'});
-    const info = await getVideoInfo(model.v);
+    const info = (await getVideoInfo(model.v)).info;
     sub.next({status: 'Complete'});
 
     const image = info.thumbnails[0];
