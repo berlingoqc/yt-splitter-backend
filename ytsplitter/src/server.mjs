@@ -1,6 +1,6 @@
 import request from "request";
 
-import { getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, getPasePath } from "./splitter.mjs";
+import { getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, getPasePath, completeList, failedList } from "./splitter.mjs";
 import {join} from 'path';
 import { copyFile, existsSync, mkdirSync } from "fs";
 
@@ -126,6 +126,37 @@ app.post("/download", (req, res) => {
   } else {
     res.send(JSON.stringify({status: 'queue'}));
   }
+});
+
+
+app.get('/download/history', (req, res) => {
+  res.send(JSON.stringify({
+    completed: completeList,
+    failed: failedList,
+  }))
+});
+
+app.delete('/download/history/rm', (req, res) => {
+  const list_name = req.query.list;
+  const index = +req.query.index;
+
+  let list;
+
+  if (list_name === 'completed') {
+    list = completeList;
+  } else if (list_name === 'failed') {
+    list = failedList;
+  }
+
+  if (list) {
+    if (list.length > index) {
+      list.splice(index, 1);
+      res.status(200);
+      return;
+    }
+  }
+
+  res.status(404);
 });
 
 app.get('/events/latest', (req, res) => {

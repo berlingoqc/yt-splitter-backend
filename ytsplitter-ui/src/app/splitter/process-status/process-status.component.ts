@@ -21,6 +21,7 @@ export class ProcessStatusComponent implements OnInit, OnDestroy {
     queue: []
   }
 
+  history: Observable<{ completed: any[], failed: any[]}>;
 
   ffmpegStatus = [];
 
@@ -30,6 +31,7 @@ export class ProcessStatusComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.history = this.splitterService.getHistory();
     this.sub = this.splitterService.downloadEvent2().subscribe((msg) => {
         if(msg.type === 'splitter') {
           this.status = msg.data;

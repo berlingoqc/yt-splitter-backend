@@ -24,3 +24,25 @@
     <li *ngFor="let q of ffmpegStatus">{{q}}</li>
   </ul>
 </div>
+
+
+<div *ngIf="history | async as h">
+  <div>
+    <h4>Completed task</h4>
+    <ul>
+      <li *ngFor="let c of h.completed">
+        {{c.album.album + ' ' + c.album.artist}}
+      </li>
+    </ul>
+  </div>
+  <div>
+    <h4>Failed task</h4>
+    <ul>
+      <li *ngFor="let c of h.failed">
+        {{c.album.album + ' ' + c.album.artist}}
+      </li>
+    </ul>
+  </div>
+</div>
+
+
