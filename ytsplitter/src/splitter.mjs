@@ -65,25 +65,25 @@ function downloadYT(v, basePath, args) {
   });
 }
 
-export function getVideoInfo(v) {
-  return new Promise((resolv, reject) => {
+export async function getVideoInfo(v) {
+  const info = await new Promise((resolv, reject) => {
     exec(
       `yt-dlp --dump-json https://www.youtube.com/watch?v=${v}`,
-      (error, stdout) => {
+      (error, stdout, stderr) => {
         if (error) {
           console.error(error);
-          reject(error);
+          reject({ error, stderr });
+        } else {
+          resolv(JSON.parse(stdout));
         }
-        resolv(JSON.parse(stdout));
       }
     );
-  }).then((info) => {
-    return {
-      info,
-      tracks: parse_tracks_from_yt_info(info),
-      name: parse_artist_album_from_text(info.title),
-    };
   });
+  return {
+    info,
+    tracks: parse_tracks_from_yt_info(info),
+    name: parse_artist_album_from_text(info.title),
+  };
 }
 
 async function extractTrackFromMP3(file, trackName, start, end, basePath) {
@@ -96,19 +96,18 @@ async function extractTrackFromMP3(file, trackName, start, end, basePath) {
       } ${end || ""} -acodec copy "${path
         .join(basePath, output)
         .replace('"', "'")}"`,
-      (error, stdout) => {
+      (error, stdout, stderr) => {
         if (error) {
-          console.error(error);
-          reject(error);
+          reject({ error, stderr });
+        } else {
+          resolver(output);
         }
-
-        resolver(output);
       }
     );
   });
 }
 
-async function tagTrack(file, album, track, imageFile, index, basePath) {
+async function tagTrack(file, model, track, imageFile, index, basePath) {
   console.log("TAG", file);
   return NodeID3.write(
     Object.assign(album, { title: track.title, APIC: imageFile, TRCK: index }),
@@ -177,13 +176,19 @@ export async function splitTracksAndTag(model, imageFile, folder) {
   for (let i = 0; i < model.tracks.length; i++) {
     const track = model.tracks[i];
     const nextTrack = model.tracks[i + 1];
-    const fileTrack = await extractTrackFromMP3(
-      "audio.mp3",
-      track.title,
-      track.ss,
+
+    let fileTrack = '';
+    try {
+      fileTrack = await extractTrackFromMP3(
+        "audio.mp3",
+        track.title,
+        track.ss,
       track.t ? track.t : nextTrack ? nextTrack.ss : undefined,
-      folder
-    );
+        folder
+      );
+    } catch (ex) {
+      throw ex;
+    }
     console.log(fileTrack, path.join(folder, imageFile));
     const success = await tagTrack(
       fileTrack,
@@ -304,9 +309,7 @@ export function yt_tracksplitter() {
     await run_splitter_step(
       sub,
       "Splittings track and adding i3tag",
-      async () => {
-        splitTracksAndTag(model, imageFile, folder);
-      }
+      async () => splitTracksAndTag(model, imageFile, folder),
     );
 
     sub.next({ status: "Done" });
@@ -337,7 +340,7 @@ export function yt_tracksplitter() {
         });
       }
     } else if (e.status === "Error") {
-      failedList.push(model);
+      failedList.push(Object.assign(model, {error: e.error}));
       currentProcessInfo.name = '';
       currentProcessInfo.items = [];
       currentProcessInfo.current = null;

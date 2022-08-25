@@ -30,6 +30,14 @@ subjectTrackSplitter.asObservable().subscribe((event) => {
   sendEventsToAll({ type: 'splitter', data: event});
 });
 
+
+function wrap_error(res, promise) {
+  promise.then(
+    (value) => res.send(value),
+    (error) => res.status(500).send(error),
+  );
+}
+
 app.get('/', (req, res) => {
   res.send(JSON.stringify({version: 0}));
 })
@@ -112,7 +120,7 @@ app.get('/explorer/:artist/albums/:album/:track', async (req, res) => {
 
 app.get('/info', async (req,res) => {
   console.log(req.query);
-  res.send(await getVideoInfo(req.query.v));
+  wrap_error(res, getVideoInfo(req.query.v));
 });
 
 app.post('/parser/tracks', (req, res) => {

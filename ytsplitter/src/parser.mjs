@@ -21,7 +21,10 @@ export function parse_track_from_line(line) {
 			const timestamp = first_timestamp[0];
 			const title = line.replace(timestamp, '').replace(/[<>\+\-\[\]\,\.]/g, "").trim();
 
-			return { title, ss: timestamp }
+			const match_index = title.match(/([0-9]{1,3}[.])/);
+			console.log('match index', match_index);
+
+			return { title, ss: timestamp}
 		}
 	}
 	
@@ -68,9 +71,35 @@ export function parse_tracks_from_yt_info(info) {
 	return parse_tracks_from_text(info.description);
 }
 
-export function parse_artist_album_from_text(text) {
-	const regex = new RegExp(/(.*)[-](.*)(\(.*\))|(\[.*\])/);
-	const match = text.match(regex);
-	return {artist: match?.[1]?.trim() || '', album: match?.[2]?.trim() }
+const regexs_artist_album = [
+	{
+		regex: new RegExp(/(.*)[-|–](.*)((?:\(.*\))|(\[.*\]))/),
+		artist_match_index: 1,
+		album_match_index: 2,
+	},
+	{
+		regex: new RegExp(/((\(.*\))|(\[.*\]))/),
+		artist_match_index: 1,
+		album_match_index: 2,
+		year_match_index: 3,
+	}
+];
 
+const regex_year = new RegExp(/.*([0-9]{4}).*/);
+
+export function parse_artist_album_from_text(text) {
+	for(let i = 0; i < regexs_artist_album.length; i++) {
+		const regex = regexs_artist_album[i];
+		const match = text.match(regex.regex);
+		if (match && match.length > regex.album_match_index) {
+			const match_year = text.match(regex_year);
+			return {
+				artist: match?.[regex.artist_match_index]?.trim() || '',
+				album: match?.[regex.album_match_index]?.trim() ,
+				year: match_year && match_year[1],
+			}
+		}
+	}
+
+	return {};
 }

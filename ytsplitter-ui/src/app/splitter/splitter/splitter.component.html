@@ -4,11 +4,19 @@
     <ng-template matStepLabel>Séléctionner</ng-template>
     <app-select-url [myForm]="formFirstStep"></app-select-url>
 
+
+    <div class="full">
+      <ng-container *ngIf="subRequest">
+        <mat-progress-bar class="full" mode="query"></mat-progress-bar>
+      </ng-container>
+      <code *ngIf="errorRequest">{{ errorRequest }}</code>
+    </div>
+
     <div>
-      <button mat-stroked-button matStepperNext (click)="afterFirstStep()">Prochaine étape</button>
+      <button mat-stroked-button (click)="afterFirstStep()">Prochaine étape</button>
     </div>
   </mat-step>
-  <mat-step [stepControl]="formSecondStep" [editable]="false">
+  <mat-step [editable]="true">
     <ng-template matStepLabel>Remplir information</ng-template>
     <div *ngIf="info">
       <button (click)="(info = null)"><mat-icon>close</mat-icon></button>
@@ -16,16 +24,18 @@
     </div>
     <app-album-info-form [myForm]="formSecondStep"></app-album-info-form>
     <div>
+      <button mat-stroked-button [routerLink]="['/','splitter']">Annuler</button>
       <button mat-stroked-button matStepperNext>Prochaine étape</button>
     </div>
   </mat-step>
   <mat-step [editable]="false">
     <ng-template matStepLabel>Paramètres</ng-template>
-    <app-settings-form></app-settings-form>
-    <app-thumbnail-edit *ngIf="info" [artist]="formSecondStep.value.artist" [album]="formSecondStep.value.album" [tumbnails]="info.thumbnails"></app-thumbnail-edit>
-    <div>
+      <app-settings-form></app-settings-form>
+      <app-thumbnail-edit *ngIf="info" [artist]="formSecondStep.value.artist" [album]="formSecondStep.value.album" [tumbnails]="info.thumbnails"></app-thumbnail-edit>
+      <div>
+        <button mat-stroked-button [routerLink]="['/','splitter']">Annuler</button>
       <button mat-stroked-button (click)="startDownload()" matStepperNext>Télécharger</button>
-    </div>
+      </div>
   </mat-step>
   <mat-step >
     <ng-template matStepLabel>Processus</ng-template>

@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
+import { MatHorizontalStepper } from '@angular/material/stepper';
 import { Observable, Subscription } from 'rxjs';
 import { SplitterService } from '../splitter.service';
 
@@ -10,6 +11,8 @@ import { SplitterService } from '../splitter.service';
 })
 export class SplitterComponent implements OnInit {
 
+  @ViewChild(MatHorizontalStepper) stepper: MatHorizontalStepper;
+
   formFirstStep = new FormGroup({
     v: new FormControl(null, [Validators.required])
   });
@@ -18,6 +21,7 @@ export class SplitterComponent implements OnInit {
   formSecondStep = new FormGroup({
     album: new FormControl(null, [Validators.required]),
     artist: new FormControl(null, [Validators.required]),
+    year: new FormControl(null, []),
     tracks_source: new FormControl("manual", [Validators.required]),
     tracks: new FormArray([]),
   });
@@ -29,6 +33,9 @@ export class SplitterComponent implements OnInit {
 
   statusTrack: any;
 
+  subRequest: Subscription;
+  errorRequest: string;
+
   constructor(
     private splitterService: SplitterService,
   ) { }
@@ -37,7 +44,10 @@ export class SplitterComponent implements OnInit {
 
 
   afterFirstStep() {
-    this.splitterService.getVideoInfo(this.formFirstStep.value.v).subscribe((data) => {
+    this.subRequest = this.splitterService.getVideoInfo(this.formFirstStep.value.v).subscribe(
+    (data) => {
+      this.subRequest = null;
+      this.stepper.next();
       this.info = data.info;
       this.proposed_tracks = data.tracks;
       this.proposed_name = data.name;
@@ -48,6 +58,7 @@ export class SplitterComponent implements OnInit {
         this.formSecondStep.setValue({
           album: this.proposed_name.album ?? '',
           artist: this.proposed_name.artist ?? '',
+          year: this.proposed_name.year ?? '',
           tracks_source: 'manual',
           tracks: [],
         });
@@ -63,7 +74,13 @@ export class SplitterComponent implements OnInit {
           }));
         }
       }
-    });
+    },
+    ({ error }) => {
+      this.subRequest = null;
+      this.errorRequest = error.stderr;
+      console.log('ERROR ', error)
+    }
+    );
   }
 
   startDownload() {
