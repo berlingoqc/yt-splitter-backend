@@ -5,3 +5,4 @@ dist/
 afterdownload.*
 music/
 request.json
+deploy.sh

@@ -26,11 +26,13 @@ export class ContextService {
     return this.pcontext.backendURL;
   }
 
-  private loadContext() {
+  private loadContext() {
     const str = localStorage.getItem('context');
     if(str) {
       this.pcontext = JSON.parse(str);
     }
+
+    this.pcontext = { backendURL: '/api', password: ''};
   }
 
 }

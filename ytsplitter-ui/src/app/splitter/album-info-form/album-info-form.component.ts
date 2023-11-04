@@ -35,6 +35,9 @@ import { SplitterService } from '../splitter.service';
 export class AlbumInfoFormComponent implements OnInit {
   @Input() myForm: FormGroup;
 
+
+  @Input() allIndexed: boolean;
+
   tracks = [];
 
   constructor(
@@ -68,6 +71,19 @@ export class AlbumInfoFormComponent implements OnInit {
     items.forEach((item) => {
       this.addTrack(item)
     })
+  }
+
+  removeIndexation() {
+    const tracks = this.myForm.controls.tracks as FormArray;
+    for(let t of tracks.controls) {
+      const value = t.value;
+      if (!value) continue;
+      value.title = value.title
+        .replace(/([0-9]{1,3}[.])/, '')
+        .replace(/(([\[\(])[0-9]{1,3}[\]\)])/, '')
+        .trim();
+      t.setValue(value);
+    }
   }
 }
 
@@ -216,6 +232,7 @@ export class TrackSSInputComponent {
 
   @Input()
   get value(): string | null {
+    console.log('VALUIE', this.parts.value);
     if (this.parts.valid) {
       const {
         value: { area, exchange, subscriber },
@@ -228,6 +245,11 @@ export class TrackSSInputComponent {
     const items = tel?.split(':') ?? [null, null, null]
     if(items.length == 2) {
       items.splice(0,0, '00');
+    }
+    // TODO fix to fix for real
+    const minute = +items[1]
+    if (minute > 59) {
+      items[1] = (minute - 60).toString();
     }
     this.parts.setValue({ area: items[0], exchange: items[1], subscriber: items[2] });
     this.stateChanges.next();

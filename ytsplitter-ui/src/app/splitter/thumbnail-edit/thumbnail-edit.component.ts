@@ -14,7 +14,16 @@ export class ThumbnailEditComponent implements OnInit, AfterViewInit {
 
   @ViewChild('img') img: ElementRef<HTMLImageElement>;
 
-  @Input() tumbnails: {url: string, height: string, width: string}[];
+  private _thumbnails: ThumbnailEditComponent['tumbnails'];
+  @Input() set tumbnails(v: {url: string, height: number, width: number}[]) {
+    this._thumbnails = v?.filter(x => x.height && x.width) || [];
+    this.selectedIndex = this._thumbnails.findIndex(x => x.height === 180);
+    this.selectedIndex = (this.selectedIndex === -1) ? 0 : this.selectedIndex;
+    console.log('SELECTED INDEX', this.selectedIndex);
+  }
+  get tumbnails() {
+    return this._thumbnails;
+  }
 
   @Input() artist: string;
   @Input() album: string;
