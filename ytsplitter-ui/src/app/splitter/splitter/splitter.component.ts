@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
-import { MatHorizontalStepper } from '@angular/material/stepper';
-import { Observable, Subscription } from 'rxjs';
+import { MatStepper } from '@angular/material/stepper';
+import { Subscription } from 'rxjs';
 import { SplitterService } from '../splitter.service';
 
 @Component({
@@ -11,7 +11,7 @@ import { SplitterService } from '../splitter.service';
 })
 export class SplitterComponent implements OnInit {
 
-  @ViewChild(MatHorizontalStepper) stepper: MatHorizontalStepper;
+  @ViewChild(MatStepper) stepper: MatStepper;
 
   formFirstStep = new FormGroup({
     v: new FormControl(null, [Validators.required])

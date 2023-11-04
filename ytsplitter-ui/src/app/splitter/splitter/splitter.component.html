@@ -1,5 +1,5 @@
 
-<mat-horizontal-stepper [linear]=true>
+<mat-stepper [linear]=true>
   <mat-step [stepControl]="formFirstStep" [editable]="false">
     <ng-template matStepLabel>Séléctionner</ng-template>
     <app-select-url [myForm]="formFirstStep"></app-select-url>
@@ -48,4 +48,4 @@
       <button mat-stroked-button [routerLink]="['/','splitter']">Voire status</button>
     </div>
   </mat-step>
-</mat-horizontal-stepper>
+</mat-stepper>

@@ -54,7 +54,7 @@ import { BasicAuthInterceptor } from './service/basic-auth.interceptor';
        path: 'explorer',
        loadChildren: () => import('./music-explorer/music-explorer.module').then((m) => m.MusicExplorerModule),
     }
-], { relativeLinkResolution: 'legacy' }),
+], {}),
   ],
   providers: [
     {
