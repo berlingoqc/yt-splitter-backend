@@ -1,5 +1,5 @@
 
-import { yt_tracksplitter_add  } from "./splitter.mjs";
+import { yt_tracksplitter_add  } from "../splitter.mjs";
 
 import { readFile } from 'fs/promises';
 import { argv } from 'process';

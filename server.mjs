@@ -1,13 +1,13 @@
 import request from "request";
 
-import { getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, getPasePath } from "./splitter.mjs";
+import { getArchiveAlbum, currentProcessInfo, getVideoInfo, getArtistList, getAlbumDetail, getAlbumList, getThumbnail, getTrack, yt_tracksplitter_add, subjectTrackSplitter, getPasePath, completeList, failedList } from "./splitter.mjs";
 import {join} from 'path';
 import { copyFile, existsSync, mkdirSync } from "fs";
 
 import express from "express";
 import cors from "cors";
-import basicAuth from 'express-basic-auth';
 import formDataa from 'express-form-data';
+import { parse_tracks_from_text } from "./parser.mjs";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -30,9 +30,17 @@ subjectTrackSplitter.asObservable().subscribe((event) => {
   sendEventsToAll({ type: 'splitter', data: event});
 });
 
+
+function wrap_error(res, promise) {
+  promise.then(
+    (value) => res.send(value),
+    (error) => res.status(500).send(error),
+  );
+}
+
 app.get('/', (req, res) => {
   res.send(JSON.stringify({version: 0}));
-},basicAuth(auth))
+})
 
 app.get('/proxy-download', (req, res) => {
   const url = req.query.url;
@@ -45,17 +53,17 @@ app.get('/proxy-download', (req, res) => {
     });
 })
 
-app.get('/explorer/artist', basicAuth(auth), async (req, res) => {
+app.get('/explorer/artist', async (req, res) => {
   const artists = await getArtistList();
   res.send(JSON.stringify(artists));
 })
 
-app.get('/explorer/:artist/albums', basicAuth(auth), async (req, res) => {
+app.get('/explorer/:artist/albums', async (req, res) => {
   const artist = req.params.artist;
   res.send(JSON.stringify(await getAlbumList(artist)));
 })
 
-app.get('/explorer/:artist/albums/:album', basicAuth(auth), async (req, res) => {
+app.get('/explorer/:artist/albums/:album', async (req, res) => {
   const artist = req.params.artist;
   const album = req.params.album;
 
@@ -110,12 +118,16 @@ app.get('/explorer/:artist/albums/:album/:track', async (req, res) => {
   res.sendFile(n, {root: getPasePath()});
 });
 
-app.get('/info', basicAuth(auth), async (req,res) => {
+app.get('/info', async (req,res) => {
   console.log(req.query);
-  res.send(await getVideoInfo(req.query.v));
+  wrap_error(res, getVideoInfo(req.query.v));
 });
 
-app.post("/download", basicAuth(auth), (req, res) => {
+app.post('/parser/tracks', (req, res) => {
+  res.send(parse_tracks_from_text(req.body.text));
+})
+
+app.post("/download", (req, res) => {
   const data = yt_tracksplitter_add(req.body);
   if(data) {
     res.send(JSON.stringify({status: 'started'}))
@@ -123,6 +135,41 @@ app.post("/download", basicAuth(auth), (req, res) => {
     res.send(JSON.stringify({status: 'queue'}));
   }
 });
+
+
+app.get('/download/history', (req, res) => {
+  res.send(JSON.stringify({
+    completed: completeList,
+    failed: failedList,
+  }))
+});
+
+app.delete('/download/history/rm', (req, res) => {
+  const list_name = req.query.list;
+  const index = +req.query.index;
+
+  let list;
+
+  if (list_name === 'completed') {
+    list = completeList;
+  } else if (list_name === 'failed') {
+    list = failedList;
+  }
+
+  if (list) {
+    if (list.length > index) {
+      list.splice(index, 1);
+      res.status(200);
+      return;
+    }
+  }
+
+  res.status(404);
+});
+
+app.get('/events/latest', (req, res) => {
+  res.send(JSON.stringify({ type: 'splitter', data: currentProcessInfo}));
+}) 
 
 app.get("/events", (req, res) => {
   // Mandatory headers and http status to keep connection open
