@@ -65,6 +65,11 @@ function downloadYT(v, basePath, args) {
   });
 }
 
+export async function getPlayListInfo(v) {
+
+
+}
+
 export async function getVideoInfo(v) {
   const info = await new Promise((resolv, reject) => {
     exec(
@@ -107,7 +112,7 @@ async function extractTrackFromMP3(file, trackName, start, end, basePath) {
   });
 }
 
-async function tagTrack(file, model, track, imageFile, index, basePath) {
+async function tagTrack(file, album, track, imageFile, index, basePath) {
   console.log("TAG", file);
   return NodeID3.write(
     Object.assign(album, { title: track.title, APIC: imageFile, TRCK: index }),
@@ -173,6 +178,7 @@ export async function getArchiveAlbum(artist, album) {
 }
 
 export async function splitTracksAndTag(model, imageFile, folder) {
+  console.log("i have " + model.tracks.length);
   for (let i = 0; i < model.tracks.length; i++) {
     const track = model.tracks[i];
     const nextTrack = model.tracks[i + 1];
