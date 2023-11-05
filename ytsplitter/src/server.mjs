@@ -120,7 +120,7 @@ app.get('/explorer/:artist/albums/:album/:track', async (req, res) => {
 
 app.get('/info', async (req,res) => {
   console.log(req.query);
-  wrap_error(res, getVideoInfo(req.query.v));
+  wrap_error(res, getVideoInfo({ v: req.query.v, p: req.query.p}));
 });
 
 app.post('/parser/tracks', (req, res) => {

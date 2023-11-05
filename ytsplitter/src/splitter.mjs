@@ -45,7 +45,7 @@ const downloadImage = function (uri, filename, callback) {
   });
 };
 
-function downloadYT(v, basePath, args) {
+function downloadYTFullAlbum(v, basePath, args) {
   const p = path.join(basePath, "original.mp4");
   console.log("PATH", p);
   return new Promise((resolver, reject) => {
@@ -65,15 +65,32 @@ function downloadYT(v, basePath, args) {
   });
 }
 
-export async function getPlayListInfo(v) {
+function downloadYTPlaylistAlbum(v, basePath, args) {
+  const p = path.join(basePath, "original.mp4");
+  console.log("PATH", p);
+  return new Promise((resolver, reject) => {
+    exec(
+      `yt-dlp https://www.youtube.com/playlist?list=${v} --audio-quality 0 -x --audio-format mp3 -o "%(title)s.%(ext)s" -P '${basePath}'`,
+      (error, stdout, stderr) => {
+        if (error) {
+          console.log(stderr);
+          console.error(error);
+          reject(error);
+        }
+        console.log(stdout);
 
-
+        resolver("original.mp3");
+      }
+    );
+  });
 }
 
-export async function getVideoInfo(v) {
+export async function getVideoInfo(model) {
+  const path = model.v ? `/watch?v=${model.v}` : `/playlist?list=${model.p}`;
   const info = await new Promise((resolv, reject) => {
     exec(
-      `yt-dlp --dump-json https://www.youtube.com/watch?v=${v}`,
+      `yt-dlp --dump-single-json https://www.youtube.com${path}`,
+      { maxBuffer: 1024 * 5000 },
       (error, stdout, stderr) => {
         if (error) {
           console.error(error);
@@ -84,6 +101,17 @@ export async function getVideoInfo(v) {
       }
     );
   });
+  if (model.p) {
+    return {
+      info,
+      tracks: info.entries.map(x => ({title: x.title})),
+      name: {
+        artist: info.entries[0].artist,
+        album: info.title,
+        year: info.entries[0].release_year
+      },
+    };
+  }
   return {
     info,
     tracks: parse_tracks_from_yt_info(info),
@@ -177,15 +205,13 @@ export async function getArchiveAlbum(artist, album) {
   return archive.toBuffer();
 }
 
-export async function splitTracksAndTag(model, imageFile, folder) {
-  console.log("i have " + model.tracks.length);
+export async function splitTracks(model, folder) {
   for (let i = 0; i < model.tracks.length; i++) {
     const track = model.tracks[i];
     const nextTrack = model.tracks[i + 1];
 
-    let fileTrack = '';
     try {
-      fileTrack = await extractTrackFromMP3(
+      await extractTrackFromMP3(
         "audio.mp3",
         track.title,
         track.ss,
@@ -195,9 +221,20 @@ export async function splitTracksAndTag(model, imageFile, folder) {
     } catch (ex) {
       throw ex;
     }
-    console.log(fileTrack, path.join(folder, imageFile));
+  }
+  if (!model.keep_audio) {
+    fs.rmSync(path.join(folder, "audio.mp3"));
+  }
+}
+
+export async function tagTracks(model, imageFile, folder) {
+  console.log("starting addings tags ", JSON.stringify(model.tracks))
+
+  for (let i = 0; i < model.tracks.length; i++) {
+    const track = model.tracks[i];
+
     const success = await tagTrack(
-      fileTrack,
+      `${track.title}.mp3`,
       model.album,
       track,
       path.join(folder, imageFile),
@@ -205,12 +242,7 @@ export async function splitTracksAndTag(model, imageFile, folder) {
       folder
     );
     console.log(success);
-    if (!success) {
-      console.error("SUCCESS FAILED");
-    }
-  }
-  if (!model.keep_audio) {
-    fs.rmSync(path.join(folder, "audio.mp3"));
+
   }
 }
 
@@ -288,7 +320,7 @@ export function yt_tracksplitter() {
     });
 
     const info = await run_splitter_step(sub, "Get video info", async () => {
-      return (await getVideoInfo(model.v)).info;
+      return (await getVideoInfo(model)).info;
     });
 
     const imageFile = await run_splitter_step(
@@ -304,18 +336,30 @@ export function yt_tracksplitter() {
       }
     );
 
-    const file = await run_splitter_step(
+    await run_splitter_step(
       sub,
       "Download youtube video",
       async () => {
-        return downloadYT(model.v, folder, model);
+        if (model.v) {
+          return downloadYTFullAlbum(model.v, folder, model);
+        } else if (model.p) {
+          return downloadYTPlaylistAlbum(model.p, folder, model);
+        }
       }
     );
 
+    if (model.v) {
+      await run_splitter_step(
+        sub,
+        "Splittings track",
+        async () => splitTracks(model, folder),
+      );
+    }
+
     await run_splitter_step(
       sub,
-      "Splittings track and adding i3tag",
-      async () => splitTracksAndTag(model, imageFile, folder),
+      "Adding i3tags",
+      async () => tagTracks(model, imageFile, folder)
     );
 
     sub.next({ status: "Done" });

@@ -36,6 +36,8 @@ export class SplitterComponent implements OnInit {
   subRequest: Subscription;
   errorRequest: string;
 
+  videoLinkInfo: any;
+
   constructor(
     private splitterService: SplitterService,
   ) { }
@@ -44,6 +46,8 @@ export class SplitterComponent implements OnInit {
 
 
   afterFirstStep() {
+    this.videoLinkInfo = this.splitterService.getVideoLinkContain(this.formFirstStep.value.v);
+
     this.subRequest = this.splitterService.getVideoInfo(this.formFirstStep.value.v).subscribe(
     (data) => {
       this.subRequest = null;
@@ -87,7 +91,6 @@ export class SplitterComponent implements OnInit {
     const first = this.formFirstStep.value;
     const second = this.formSecondStep.value;
     const data = {
-      v: first.v,
       album: {
         album: second.album,
         artist: second.artist,
@@ -95,7 +98,7 @@ export class SplitterComponent implements OnInit {
       tracks_source: second.tracks_source,
       tracks: second.tracks
     }
-    this.splitterService.download(data).subscribe((status) => {
+    this.splitterService.download(Object.assign(this.videoLinkInfo, data)).subscribe((status) => {
       this.statusTrack = status;
     })
   }

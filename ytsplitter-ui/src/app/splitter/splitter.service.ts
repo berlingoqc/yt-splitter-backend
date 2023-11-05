@@ -23,7 +23,29 @@ export class SplitterService {
   downloadSub: Subscription;
 
   getVideoInfo(v: string): any {
-    return this.httpClient.get(`${this.context.url}/info?v=${v}`)
+    let videoLink = this.getVideoLinkContain(v);
+    let query = videoLink.v ? `v=${videoLink.v}` : `p=${videoLink.p}`;
+
+    return this.httpClient.get(`${this.context.url}/info?${query}`)
+  }
+
+  getVideoLinkContain(v: string) {
+
+    if (v.includes("youtube")) {
+      const url = new URL(v);
+      const params = url.searchParams;
+
+      if (v.includes("watch")) {
+        return {v: params.get("v")}
+      } else if (v.includes("playlist")) {
+        return {p: params.get("list")}
+      } else {
+        throw "failed to parse link";
+      }
+    } else {
+      return { v };
+    }
+
   }
 
   download(request: RequestSplitter): any {
