@@ -8,7 +8,7 @@ import NodeID3 from "node-id3";
 import zip from "adm-zip";
 import { BehaviorSubject, Observable } from "rxjs";
 
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import {
   parse_artist_album_from_text,
   parse_tracks_from_yt_info,
@@ -45,43 +45,70 @@ const downloadImage = function (uri, filename, callback) {
   });
 };
 
-function downloadYTFullAlbum(v, basePath, args) {
-  const p = path.join(basePath, "original.mp4");
-  console.log("PATH", p);
-  return new Promise((resolver, reject) => {
-    const chapiter_split =
-      args.tracks_source === "chapters" ? "--split-chapters" : "";
-    exec(
-      `yt-dlp https://www.youtube.com/watch?v=${v} --audio-quality 0 -x --audio-format mp3 -P '${basePath}' -o 'audio.%(ext)s' ${chapiter_split}`,
-      (error, stdout, stderr) => {
-        if (error) {
-          console.error(error);
-          reject(error);
-        }
+function handleChildOutput(child, resolve, reject) {
+  let dataOut = '';
+  let dataErr = '';
 
-        resolver("original.mp3");
-      }
-    );
+  child.stdout.on('data', (data) => {
+    dataOut += data;
+  });
+
+  child.stderr.on('data', (data) => {
+    dataErr += data;
+  });
+
+  child.on('close', (code) => {
+    console.log('CLOSE ' + dataOut);
+    console.log(dataErr);
+    if (code === 0) {
+      resolve(dataOut);
+    } else {
+      reject(new Error(`child process exited with code ${code}\n${dataErr}`));
+    }
+  });
+
+  child.on('error', (err) => {
+    console.log(dataOut);
+    console.log(dataErr);
+    reject(err);
+  });
+}
+
+function downloadYTFullAlbum(v, basePath, args) {
+  const chapiter_split =
+    args.tracks_source === "chapters" ? "--split-chapters" : "";
+
+  const arg = [
+    `https://www.youtube.com/watch?v=${v}`,
+    "--audio-quality", "0",
+    "-x",
+    "--audio-format", "mp3",
+    "-P", basePath,
+    "-o", "audio.%(ext)s",
+    chapiter_split
+  ];
+  return new Promise((resolve, reject) => {
+    const child = spawn("yt-dlp", arg);
+
+    handleChildOutput(child, resolve, reject);
   });
 }
 
 function downloadYTPlaylistAlbum(v, basePath, args) {
-  const p = path.join(basePath, "original.mp4");
-  console.log("PATH", p);
-  return new Promise((resolver, reject) => {
-    exec(
-      `yt-dlp https://www.youtube.com/playlist?list=${v} --audio-quality 0 -x --audio-format mp3 -o "%(title)s.%(ext)s" -P '${basePath}'`,
-      (error, stdout, stderr) => {
-        if (error) {
-          console.log(stderr);
-          console.error(error);
-          reject(error);
-        }
-        console.log(stdout);
-
-        resolver("original.mp3");
-      }
+  const arg = [
+    `https://www.youtube.com/playlist?list=${v}`,
+    "--audio-quality", "0",
+    "-x",
+    "--audio-format", "mp3",
+    "-o", "%(title)s.%(ext)s",
+    "-P", basePath
+  ];
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      "yt-dlp", arg,
     );
+
+    handleChildOutput(child, resolve, reject)
   });
 }
 
@@ -90,7 +117,7 @@ export async function getVideoInfo(model) {
   const info = await new Promise((resolv, reject) => {
     exec(
       `yt-dlp --dump-single-json https://www.youtube.com${path}`,
-      { maxBuffer: 1024 * 5000 },
+      { maxBuffer: 1024 * 500000 },
       (error, stdout, stderr) => {
         if (error) {
           console.error(error);
@@ -122,26 +149,26 @@ export async function getVideoInfo(model) {
 async function extractTrackFromMP3(file, trackName, start, end, basePath) {
   const output = `${trackName}.mp3`;
   console.log("EXTRACTING ", start, end);
-  return new Promise((resolver, reject) => {
-    exec(
-      `ffmpeg -i '${path.join(basePath, file)}' -y -ss ${start} ${
-        end ? "-to" : ""
-      } ${end || ""} -acodec copy "${path
-        .join(basePath, output)
-        .replace('"', "'")}"`,
-      (error, stdout, stderr) => {
-        if (error) {
-          reject({ error, stderr });
-        } else {
-          resolver(output);
-        }
-      }
+  const arg = [
+    "-i", path.join(basePath, file),
+    "-y",
+    "-ss", start,
+    end ? "-to" : "", end || "",
+    "-acodec", "copy",
+    path.join(basePath, output)
+  ];
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      "ffmpeg", arg
     );
+
+    handleChildOutput(child, resolve, reject)
   });
 }
 
 async function tagTrack(file, album, track, imageFile, index, basePath) {
   console.log("TAG", file);
+
   return NodeID3.write(
     Object.assign(album, { title: track.title, APIC: imageFile, TRCK: index }),
     path.join(basePath, file)
